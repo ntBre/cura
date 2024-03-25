@@ -9,12 +9,10 @@ use std::path::Path;
 use std::sync::atomic::AtomicUsize;
 
 use clap::Parser;
+use cura::{Table, PROGRESS_INTERVAL};
 use log::{trace, warn};
 use rayon::iter::{ParallelBridge, ParallelIterator};
 use rdkit_rs::{RDError, ROMol, SDMolSupplier};
-use rusqlite::Connection;
-
-const PROGRESS_INTERVAL: usize = 1000;
 
 #[derive(Parser)]
 struct Cli {
@@ -28,44 +26,6 @@ struct Cli {
     threads: usize,
 }
 
-struct Table {
-    conn: Connection,
-}
-
-impl Table {
-    fn new(path: impl AsRef<Path>) -> rusqlite::Result<Self> {
-        let conn = Connection::open(path)?;
-        conn.execute(include_str!("create_table.sql"), ())?;
-        Ok(Self { conn })
-    }
-
-    #[allow(unused)]
-    fn insert_molecule(
-        &self,
-        smiles: String,
-        moldata: String,
-    ) -> rusqlite::Result<()> {
-        let mut stmt =
-            self.conn.prepare(include_str!("insert_molecule.sql"))?;
-        stmt.execute((smiles, moldata))?;
-        Ok(())
-    }
-
-    fn insert_molecules(
-        &mut self,
-        mols: Vec<(String, String)>,
-    ) -> rusqlite::Result<()> {
-        let tx = self.conn.transaction()?;
-        for (i, (smiles, moldata)) in mols.iter().enumerate() {
-            tx.execute(include_str!("insert_molecule.sql"), (smiles, moldata))?;
-            if i % PROGRESS_INTERVAL == 0 {
-                eprint!("{i} complete\r");
-            }
-        }
-        tx.commit()
-    }
-}
-
 fn main() {
     env_logger::init();
 
@@ -75,7 +35,7 @@ fn main() {
         std::fs::remove_file(tbl).unwrap();
     }
 
-    let mut table = Table::new(tbl).unwrap();
+    let mut table = Table::create(tbl).unwrap();
 
     let cli = Cli::parse();
     trace!("initializing mol supplier from {}", cli.molecule_file);
