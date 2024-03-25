@@ -14,6 +14,8 @@ use rayon::iter::{ParallelBridge, ParallelIterator};
 use rdkit_rs::{RDError, ROMol, SDMolSupplier};
 use rusqlite::Connection;
 
+const PROGRESS_INTERVAL: usize = 1000;
+
 #[derive(Parser)]
 struct Cli {
     /// The path to the SDF file from which to read Molecules.
@@ -56,7 +58,9 @@ impl Table {
         let tx = self.conn.transaction()?;
         for (i, (smiles, moldata)) in mols.iter().enumerate() {
             tx.execute(include_str!("insert_molecule.sql"), (smiles, moldata))?;
-            eprint!("{i} complete\r");
+            if i % PROGRESS_INTERVAL == 0 {
+                eprint!("{i} complete\r");
+            }
         }
         tx.commit()
     }
@@ -83,8 +87,6 @@ fn main() {
         .unwrap();
 
     let progress = AtomicUsize::new(0);
-
-    const PROGRESS_INTERVAL: usize = 1000;
 
     let map_op = |mol: Result<ROMol, RDError>| -> Option<(String, String)> {
         let cur = progress.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
