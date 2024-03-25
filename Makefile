@@ -1,10 +1,15 @@
-CHEMBL := /home/brent/omsf/chembl/data/chembl_33.sdf
+CHEMBL_BASE := /home/brent/omsf/chembl
+CHEMBL := $(CHEMBL_BASE)/data/chembl_33.sdf
 
 clippy:
 	cargo clippy
 
-run:
-	cargo run --release --bin cura -- store $(CHEMBL)
+# Usage:
+# $(call run, SUBCOMMAND, ARGS...)
+run = cargo run --release -- $1 $2
+
+store:
+	$(call run, store, $(CHEMBL))
 
 query:
-	cargo run --release --bin query
+	$(call run, query, -s $(CHEMBL_BASE)/input/want.params -o output)
