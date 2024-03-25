@@ -19,6 +19,23 @@ use rayon::iter::{IntoParallelRefIterator, ParallelBridge, ParallelIterator};
 use rdkit_rs::{RDError, ROMol, SDMolSupplier};
 use rsearch::{find_matches, load_want, print_output, write_output};
 
+/// Load an OpenFF [ForceField] from `forcefield` and return a sequence of
+/// parameter_id, SMIRKS pattern pairs corresponding to its `parameter_type`
+/// [ParameterHandler].
+fn load_forcefield(
+    forcefield: String,
+    parameter_type: String,
+) -> Vec<(String, ROMol)> {
+    ForceField::load(&forcefield)
+        .unwrap()
+        .get_parameter_handler(&parameter_type)
+        .unwrap()
+        .parameters()
+        .into_iter()
+        .map(|p| (p.id(), ROMol::from_smarts(&p.smirks())))
+        .collect()
+}
+
 #[derive(Parser)]
 struct Cli {
     #[arg(short, long, default_value = "try.sqlite")]
@@ -171,23 +188,6 @@ fn query(
     } else {
         print_output(res);
     }
-}
-
-/// Load an OpenFF [ForceField] from `forcefield` and return a sequence of
-/// parameter_id, SMIRKS pattern pairs corresponding to its `parameter_type`
-/// [ParameterHandler].
-fn load_forcefield(
-    forcefield: String,
-    parameter_type: String,
-) -> Vec<(String, ROMol)> {
-    ForceField::load(&forcefield)
-        .unwrap()
-        .get_parameter_handler(&parameter_type)
-        .unwrap()
-        .parameters()
-        .into_iter()
-        .map(|p| (p.id(), ROMol::from_smarts(&p.smirks())))
-        .collect()
 }
 
 fn main() {
