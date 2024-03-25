@@ -22,6 +22,7 @@ impl Table {
         Ok(Self { conn })
     }
 
+    /// Insert a single molecule entry into the database.
     pub fn insert_molecule(
         &self,
         smiles: String,
@@ -33,6 +34,8 @@ impl Table {
         Ok(())
     }
 
+    /// Insert a sequence of SMILES, moldata pairs into the database in a single
+    /// transaction.
     pub fn insert_molecules(
         &mut self,
         mols: Vec<(String, String)>,
@@ -47,8 +50,8 @@ impl Table {
         tx.commit()
     }
 
-    /// returns a flattened vector of JSON molecule data strings from the
-    /// database
+    /// Return a flattened vector of JSON molecule data strings from the
+    /// database.
     pub fn get_moldata(&self) -> rusqlite::Result<Vec<String>> {
         let mut stmt = self.conn.prepare(include_str!("get_moldata.sql"))?;
         let ret = stmt
