@@ -33,7 +33,7 @@ fn main() {
         let mut mol = ROMol::from_json(&mol);
         trace!("calling clean");
 
-        // TODO do I have to clean if it was cleaned going into the db?
+        // necessary to avoid pre-condition violation on match
         mol.openff_clean();
 
         trace!("calling find_matches");
