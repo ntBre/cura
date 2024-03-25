@@ -190,6 +190,17 @@ fn query(
     }
 }
 
+fn parse(
+    table: &mut Table,
+    input: PathBuf,
+    forcefield: String,
+    parameter_type: String,
+    target: String,
+) {
+    let _ = table;
+    todo!("parse {input:?} {forcefield} {parameter_type} {target}");
+}
+
 fn main() {
     env_logger::init();
 
@@ -221,6 +232,6 @@ fn main() {
             forcefield,
             parameter_type,
             target,
-        } => todo!("parse {input:?} {forcefield} {parameter_type} {target}"),
+        } => parse(&mut table, input, forcefield, parameter_type, target),
     }
 }
