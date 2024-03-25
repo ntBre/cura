@@ -36,6 +36,7 @@ impl Table {
         Ok(Self { conn })
     }
 
+    #[allow(unused)]
     fn insert_molecule(
         &self,
         smiles: String,
@@ -45,6 +46,18 @@ impl Table {
             self.conn.prepare(include_str!("insert_molecule.sql"))?;
         stmt.execute((smiles, moldata))?;
         Ok(())
+    }
+
+    fn insert_molecules(
+        &mut self,
+        mols: Vec<(String, String)>,
+    ) -> rusqlite::Result<()> {
+        let tx = self.conn.transaction()?;
+        for (i, (smiles, moldata)) in mols.iter().enumerate() {
+            tx.execute(include_str!("insert_molecule.sql"), (smiles, moldata))?;
+            eprint!("{i} complete\r");
+        }
+        tx.commit()
     }
 }
 
@@ -56,7 +69,7 @@ fn main() {
         std::fs::remove_file(tbl).unwrap();
     }
 
-    let table = Table::new(tbl).unwrap();
+    let mut table = Table::new(tbl).unwrap();
 
     let cli = Cli::parse();
     trace!("initializing mol supplier from {}", cli.molecule_file);
@@ -85,7 +98,5 @@ fn main() {
     };
     let results: Vec<_> = m.into_iter().par_bridge().flat_map(map_op).collect();
 
-    for (smiles, moldata) in results {
-        table.insert_molecule(smiles, moldata).unwrap();
-    }
+    table.insert_molecules(results).unwrap();
 }
