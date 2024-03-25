@@ -11,3 +11,5 @@ rayon = "1.8.0"
 rusqlite = { version = "0.31.0", features = ["bundled"] }
 
 rdkit-rs = { path = "../rdkit-rs" }
+openff-toolkit = { path = "/home/brent/omsf/rust/coprelos/openff-toolkit" }
+rsearch = { path = "/home/brent/omsf/chembl" }
