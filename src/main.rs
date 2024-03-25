@@ -51,7 +51,12 @@ impl Table {
 fn main() {
     env_logger::init();
 
-    let table = Table::new("try.sqlite").unwrap();
+    let tbl = Path::new("try.sqlite");
+    if tbl.exists() {
+        std::fs::remove_file(tbl).unwrap();
+    }
+
+    let table = Table::new(tbl).unwrap();
 
     let cli = Cli::parse();
     trace!("initializing mol supplier from {}", cli.molecule_file);
