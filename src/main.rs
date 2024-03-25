@@ -79,7 +79,6 @@ fn main() {
         let Ok(mut mol) = mol else {
             return None;
         };
-        trace!("calling clean");
         mol.openff_clean();
 
         Some((mol.to_smiles(), mol.to_json()))
