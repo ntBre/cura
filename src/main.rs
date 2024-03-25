@@ -5,7 +5,11 @@
 //! JSON representation of the ROMol. later on, I can decorate these entries
 //! with their Morgan fingerprints or other useful information
 
-use std::{collections::HashMap, path::Path, sync::atomic::AtomicUsize};
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+    sync::atomic::AtomicUsize,
+};
 
 use clap::{Parser, Subcommand};
 use cura::{Table, PROGRESS_INTERVAL};
@@ -58,6 +62,30 @@ enum Commands {
         #[arg(short, long)]
         output_dir: Option<String>,
     },
+
+    /// Parse the output from `cura query`, then fragment, fingerprint, and
+    /// cluster the results. Writes the output to `input` with the extension
+    /// `html`
+    Parse {
+        /// The OpenFF force field to load from the toolkit.
+        #[arg(short, long, default_value = "openff-2.1.0.offxml")]
+        forcefield: String,
+
+        /// The `Parameter` type for which to extract parameters. Allowed
+        /// options are valid arguments to `ForceField.get_parameter_handler`,
+        /// such as Bonds, Angles, or ProperTorsions.
+        #[arg(short, long, default_value = "ProperTorsions")]
+        parameter_type: String,
+
+        /// The target parameter. Must correspond to a parameter of type
+        /// `parameter_type` in `forcefield`.
+        #[arg(short, long)]
+        target: String,
+
+        /// The input SMILES file to read. TODO handle a directory recursively
+        /// or at least multiple files
+        input: PathBuf,
+    },
 }
 
 fn store(table: &mut Table, molecule_file: String) {
@@ -95,12 +123,7 @@ fn query(
     let data = table.get_moldata().unwrap();
 
     info!("loading force field and parameters");
-    let ff = ForceField::load(&forcefield).unwrap();
-    let h = ff.get_parameter_handler(&parameter_type).unwrap();
-    let mut params = Vec::new();
-    for p in h.parameters() {
-        params.push((p.id(), ROMol::from_smarts(&p.smirks())));
-    }
+    let params = load_forcefield(forcefield, parameter_type);
 
     let want = load_want(&search_params);
 
@@ -150,6 +173,23 @@ fn query(
     }
 }
 
+/// Load an OpenFF [ForceField] from `forcefield` and return a sequence of
+/// parameter_id, SMIRKS pattern pairs corresponding to its `parameter_type`
+/// [ParameterHandler].
+fn load_forcefield(
+    forcefield: String,
+    parameter_type: String,
+) -> Vec<(String, ROMol)> {
+    ForceField::load(&forcefield)
+        .unwrap()
+        .get_parameter_handler(&parameter_type)
+        .unwrap()
+        .parameters()
+        .into_iter()
+        .map(|p| (p.id(), ROMol::from_smarts(&p.smirks())))
+        .collect()
+}
+
 fn main() {
     env_logger::init();
 
@@ -176,5 +216,11 @@ fn main() {
             search_params,
             output_dir,
         ),
+        Commands::Parse {
+            input,
+            forcefield,
+            parameter_type,
+            target,
+        } => todo!("parse {input:?} {forcefield} {parameter_type} {target}"),
     }
 }
