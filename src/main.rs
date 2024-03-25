@@ -2,7 +2,8 @@
 //! from multiple sources (not just ChEMBL) in a SQLite database for later
 //! queries instead of reading and processing the source SDF each time.
 //! currently, the stored representation is very simple: just the SMILES and
-//! JSON representation of the ROMol.
+//! JSON representation of the ROMol. later on, I can decorate these entries
+//! with their Morgan fingerprints or other useful information
 
 use std::path::Path;
 use std::sync::atomic::AtomicUsize;
