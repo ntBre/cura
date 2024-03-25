@@ -30,7 +30,7 @@ fn main() {
         if cur % PROGRESS_INTERVAL == 0 {
             eprint!("{cur} complete\r");
         }
-        let mut mol = ROMol::from_json(&mol);
+        let mut mol = ROMol::from_json(mol);
         trace!("calling clean");
 
         // necessary to avoid pre-condition violation on match
