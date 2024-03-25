@@ -56,5 +56,9 @@ fn main() {
         res.entry(pid.to_string()).or_default().push(mol);
     }
 
-    write_output("output", res);
+    let dir = std::path::Path::new("output");
+    if !dir.exists() {
+        std::fs::create_dir(dir).unwrap();
+    }
+    write_output(dir, res);
 }
