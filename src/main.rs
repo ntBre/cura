@@ -15,35 +15,14 @@ use rusqlite::Connection;
 
 #[derive(Parser)]
 struct Cli {
-    /// The OpenFF force field to load from the toolkit.
-    #[arg(short, long, default_value = "openff-2.1.0.offxml")]
-    forcefield: String,
-
-    /// The `Parameter` type for which to extract parameters. Allowed options
-    /// are valid arguments to `ForceField.get_parameter_handler`, such as
-    /// Bonds, Angles, or ProperTorsions.
-    #[arg(short, long, default_value = "ProperTorsions")]
-    parameter_type: String,
-
     /// The path to the SDF file from which to read Molecules.
     #[arg(short, long, default_value = "chembl_33.sdf")]
     molecule_file: String,
-
-    /// The path to the file listing the parameter identifiers to match against,
-    /// one per line. These must correspond to parameters in the provided
-    /// forcefield.
-    #[arg(short, long, default_value = "want.params")]
-    search_params: String,
 
     /// The number of threads to use. Defaults to the number of logical CPUs as
     /// detected by rayon.
     #[arg(short, long, default_value_t = 0)]
     threads: usize,
-
-    /// Where to write output SMILES files, one for each input parameter. If
-    /// false, print the output to stdout.
-    #[arg(short, long)]
-    output_dir: Option<String>,
 }
 
 struct Table {

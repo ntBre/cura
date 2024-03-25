@@ -10,5 +10,4 @@ log = "0.4.20"
 rayon = "1.8.0"
 rusqlite = { version = "0.31.0", features = ["bundled"] }
 
-openff-toolkit = { path = "/home/brent/omsf/rust/coprelos/openff-toolkit" }
 rdkit-rs = { path = "../rdkit-rs" }
