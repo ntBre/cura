@@ -9,7 +9,7 @@ use std::path::Path;
 use std::sync::atomic::AtomicUsize;
 
 use clap::Parser;
-use log::trace;
+use log::{trace, warn};
 use rayon::iter::{ParallelBridge, ParallelIterator};
 use rdkit_rs::{RDError, ROMol, SDMolSupplier};
 use rusqlite::Connection;
@@ -94,6 +94,7 @@ fn main() {
             eprint!("{cur} complete\r");
         }
         let Ok(mut mol) = mol else {
+            warn!("error loading molecule, skipping");
             return None;
         };
         mol.openff_clean();
