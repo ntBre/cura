@@ -66,6 +66,7 @@ fn main() {
 
     let tbl = Path::new("try.sqlite");
     if tbl.exists() {
+        trace!("removing existing table file: `{tbl:?}`");
         std::fs::remove_file(tbl).unwrap();
     }
 
