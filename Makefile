@@ -7,6 +7,9 @@ clippy:
 test:
 	cargo test
 
+clean:
+	rm try.sqlite
+
 # Usage:
 # $(call run, SUBCOMMAND, ARGS...)
 run = cargo run --release -- $1 $2
