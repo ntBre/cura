@@ -8,6 +8,14 @@ pub mod query;
 pub mod store;
 pub mod table;
 
+/// Database record
+pub struct Molecule {
+    smiles: String,
+    natoms: usize,
+    elements: i128,
+    moldata: String,
+}
+
 /// Load an OpenFF [ForceField] from `forcefield` and return a sequence of
 /// parameter_id, SMIRKS pattern pairs corresponding to its `parameter_type`
 /// [ParameterHandler].

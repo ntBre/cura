@@ -5,6 +5,7 @@ use std::path::Path;
 use flate2::{read::ZlibDecoder, write::ZlibEncoder, Compression};
 use rusqlite::Connection;
 
+use crate::Molecule;
 use crate::PROGRESS_INTERVAL;
 
 pub struct Table {
@@ -41,14 +42,26 @@ impl Table {
     /// transaction.
     pub fn insert_molecules(
         &mut self,
-        mols: Vec<(String, String)>,
+        mols: Vec<Molecule>,
     ) -> rusqlite::Result<()> {
         let tx = self.conn.transaction()?;
-        for (i, (smiles, moldata)) in mols.iter().enumerate() {
+        for (
+            i,
+            Molecule {
+                smiles,
+                natoms,
+                elements,
+                moldata,
+            },
+        ) in mols.iter().enumerate()
+        {
             let mut e = ZlibEncoder::new(Vec::new(), Compression::default());
             e.write_all(moldata.as_bytes()).unwrap();
             let moldata = e.finish().unwrap();
-            tx.execute(include_str!("insert_molecule.sql"), (smiles, moldata))?;
+            tx.execute(
+                include_str!("insert_molecule.sql"),
+                (smiles, natoms, elements, moldata),
+            )?;
             if i % PROGRESS_INTERVAL == 0 {
                 eprint!("{i} complete\r");
             }

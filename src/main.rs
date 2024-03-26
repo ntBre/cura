@@ -92,7 +92,7 @@ fn main() {
     let mut table = Table::create(&cli.database).unwrap();
 
     match cli.command {
-        Commands::Store { molecule_file } => store(&mut table, molecule_file),
+        Commands::Store { molecule_file } => store(&mut table, &molecule_file),
         Commands::Query {
             forcefield,
             parameter_type,
