@@ -87,4 +87,16 @@ impl Table {
 
         Ok(ret)
     }
+
+    /// Return a flattened vector of SMILES from the database.
+    pub fn get_smiles(&self) -> rusqlite::Result<Vec<String>> {
+        let mut stmt = self.conn.prepare(include_str!("get_smiles.sql"))?;
+        let ret = stmt
+            .query_map([], |row| Ok(row.get(0).unwrap()))
+            .unwrap()
+            .flatten()
+            .collect();
+
+        Ok(ret)
+    }
 }
