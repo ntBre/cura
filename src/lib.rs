@@ -13,7 +13,6 @@ pub struct Molecule {
     smiles: String,
     natoms: usize,
     elements: i128,
-    moldata: String,
 }
 
 /// Load an OpenFF [ForceField] from `forcefield` and return a sequence of
@@ -72,7 +71,7 @@ mod tests {
         let mut table = Table::create(tmp.path()).unwrap();
         // this file has multiple entries, but only one SMILES
         store(&mut table, "testfiles/small.sdf");
-        let got = table.get_moldata().unwrap().len();
+        let got = table.get_smiles().unwrap().len();
         let want = 1;
         assert_eq!(got, want);
     }

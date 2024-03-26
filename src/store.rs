@@ -31,7 +31,6 @@ pub fn store(table: &mut Table, molecule_file: &str) {
                     smiles: mol.to_smiles(),
                     natoms: mol.num_atoms(),
                     elements: get_elements(&mol),
-                    moldata: mol.to_json(),
                 }
             })
             .collect()
