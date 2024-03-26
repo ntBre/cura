@@ -725,7 +725,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0c2a198fb6b0eada2a8df47933734e6d35d350665a33a3593d7164fa52c75c19"
 dependencies = [
  "cfg-if",
- "windows-targets 0.52.4",
+ "windows-targets 0.48.5",
 ]
 
 [[package]]
@@ -1121,7 +1121,7 @@ dependencies = [
 [[package]]
 name = "rdkit-sys"
 version = "0.1.0"
-source = "git+https://github.com/ntBre/rdkit-sys#2a66f7cf19a46c069848fd47179fe76cb90b8d3b"
+source = "git+https://github.com/ntBre/rdkit-sys#7d0afd829ad352c16f3032c7af3dc0493fcdc9f8"
 dependencies = [
  "bindgen",
 ]
