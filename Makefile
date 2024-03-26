@@ -19,3 +19,6 @@ store:
 
 query:
 	$(call run, query, -s $(CHEMBL_BASE)/input/want.params -o output)
+
+parse:
+	$(call run, parse, output/t18b.smiles -t t18b)
