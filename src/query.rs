@@ -15,7 +15,7 @@ pub fn query(
     output_dir: Option<String>,
 ) {
     info!("loading moldata from database");
-    let data = table.get_moldata().unwrap();
+    let data = table.get_smiles().unwrap();
 
     info!("loading force field and parameters");
     let params = load_forcefield(forcefield, parameter_type);
@@ -24,12 +24,12 @@ pub fn query(
 
     info!("processing data");
     let progress = AtomicUsize::new(0);
-    let map_op = |mol: &String| -> Vec<(String, String)> {
+    let map_op = |smiles: &String| -> Vec<(String, String)> {
         let cur = progress.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
         if cur % PROGRESS_INTERVAL == 0 {
             eprint!("{cur} complete\r");
         }
-        let mut mol = ROMol::from_json(mol);
+        let mut mol = ROMol::from_smiles(smiles);
 
         trace!("calling clean");
         mol.openff_clean(); // avoids pre-condition violation on match
@@ -38,12 +38,8 @@ pub fn query(
         let matches = find_matches(&params, &mol);
 
         let mut res: Vec<(String, String)> = Vec::new();
-        let mut smiles = None;
         for pid in matches.intersection(&want) {
-            if smiles.is_none() {
-                smiles = Some(mol.to_smiles());
-            }
-            res.push((pid.to_string(), smiles.clone().unwrap()));
+            res.push((pid.to_string(), smiles.clone()));
         }
         res
     };
