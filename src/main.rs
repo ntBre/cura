@@ -5,36 +5,10 @@
 //! JSON representation of the ROMol. later on, I can decorate these entries
 //! with their Morgan fingerprints or other useful information
 
-use std::{
-    collections::HashMap,
-    path::{Path, PathBuf},
-    sync::atomic::AtomicUsize,
-};
+use std::path::PathBuf;
 
 use clap::{Parser, Subcommand};
-use cura::{table::Table, PROGRESS_INTERVAL};
-use log::{info, trace, warn};
-use openff_toolkit::ForceField;
-use rayon::iter::{IntoParallelRefIterator, ParallelBridge, ParallelIterator};
-use rdkit_rs::{RDError, ROMol, SDMolSupplier};
-use rsearch::{find_matches, load_want, print_output, write_output};
-
-/// Load an OpenFF [ForceField] from `forcefield` and return a sequence of
-/// parameter_id, SMIRKS pattern pairs corresponding to its `parameter_type`
-/// [ParameterHandler].
-fn load_forcefield(
-    forcefield: String,
-    parameter_type: String,
-) -> Vec<(String, ROMol)> {
-    ForceField::load(&forcefield)
-        .unwrap()
-        .get_parameter_handler(&parameter_type)
-        .unwrap()
-        .parameters()
-        .into_iter()
-        .map(|p| (p.id(), ROMol::from_smarts(&p.smirks())))
-        .collect()
-}
+use cura::{parse::parse, query::query, store::store, table::Table};
 
 #[derive(Parser)]
 struct Cli {
@@ -103,102 +77,6 @@ enum Commands {
         /// or at least multiple files
         input: PathBuf,
     },
-}
-
-fn store(table: &mut Table, molecule_file: String) {
-    trace!("initializing mol supplier from {}", molecule_file);
-    let m = SDMolSupplier::new(molecule_file).unwrap();
-
-    let progress = AtomicUsize::new(0);
-
-    let map_op = |mol: Result<ROMol, RDError>| -> Option<(String, String)> {
-        let cur = progress.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-        if cur % PROGRESS_INTERVAL == 0 {
-            eprint!("{cur} complete\r");
-        }
-        let Ok(mut mol) = mol else {
-            warn!("error loading molecule, skipping");
-            return None;
-        };
-        mol.openff_clean();
-
-        Some((mol.to_smiles(), mol.to_json()))
-    };
-    let results: Vec<_> = m.into_iter().par_bridge().flat_map(map_op).collect();
-
-    table.insert_molecules(results).unwrap();
-}
-
-fn query(
-    table: &mut Table,
-    forcefield: String,
-    parameter_type: String,
-    search_params: String,
-    output_dir: Option<String>,
-) {
-    info!("loading moldata from database");
-    let data = table.get_moldata().unwrap();
-
-    info!("loading force field and parameters");
-    let params = load_forcefield(forcefield, parameter_type);
-
-    let want = load_want(&search_params);
-
-    info!("processing data");
-    let progress = AtomicUsize::new(0);
-    let map_op = |mol: &String| -> Vec<(String, String)> {
-        let cur = progress.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-        if cur % PROGRESS_INTERVAL == 0 {
-            eprint!("{cur} complete\r");
-        }
-        let mut mol = ROMol::from_json(mol);
-
-        trace!("calling clean");
-        mol.openff_clean(); // avoids pre-condition violation on match
-
-        trace!("calling find_matches");
-        let matches = find_matches(&params, &mol);
-
-        let mut res: Vec<(String, String)> = Vec::new();
-        let mut smiles = None;
-        for pid in matches.intersection(&want) {
-            if smiles.is_none() {
-                smiles = Some(mol.to_smiles());
-            }
-            res.push((pid.to_string(), smiles.clone().unwrap()));
-        }
-        res
-    };
-    let results: Vec<_> = data.par_iter().flat_map(map_op).collect();
-
-    let mut res: HashMap<String, Vec<String>> = HashMap::new();
-    for (pid, mol) in results {
-        res.entry(pid.to_string()).or_default().push(mol);
-    }
-
-    if let Some(dir) = output_dir {
-        let dir = Path::new(&dir);
-        if !dir.exists() && std::fs::create_dir_all(dir).is_err() {
-            eprintln!("failed to create output dir {dir:?}");
-            eprintln!("falling back to stdout");
-            print_output(res);
-            return;
-        }
-        write_output(dir, res);
-    } else {
-        print_output(res);
-    }
-}
-
-fn parse(
-    table: &mut Table,
-    input: PathBuf,
-    forcefield: String,
-    parameter_type: String,
-    target: String,
-) {
-    let _ = table;
-    todo!("parse {input:?} {forcefield} {parameter_type} {target}");
 }
 
 fn main() {
