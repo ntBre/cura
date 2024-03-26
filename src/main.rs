@@ -12,7 +12,7 @@ use std::{
 };
 
 use clap::{Parser, Subcommand};
-use cura::{Table, PROGRESS_INTERVAL};
+use cura::{table::Table, PROGRESS_INTERVAL};
 use log::{info, trace, warn};
 use openff_toolkit::ForceField;
 use rayon::iter::{IntoParallelRefIterator, ParallelBridge, ParallelIterator};
