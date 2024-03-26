@@ -17,10 +17,11 @@ pub fn store(table: &mut Table, molecule_file: &str) {
         if cur % PROGRESS_INTERVAL == 0 {
             eprint!("{cur} complete\r");
         }
-        let Ok(mol) = mol else {
+        let Ok(mut mol) = mol else {
             warn!("error loading molecule, skipping");
             return Vec::new();
         };
+        mol.openff_clean();
         mol.to_smiles()
             .split('.')
             .map(|s| {
