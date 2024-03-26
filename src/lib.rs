@@ -24,3 +24,35 @@ fn load_forcefield(
         .map(|p| (p.id(), ROMol::from_smarts(&p.smirks())))
         .collect()
 }
+
+/// Encode the elements in `mol` as a 128-bit set
+pub fn get_elements(mol: &ROMol) -> i128 {
+    let mut ret = 0;
+    for i in mol.elements() {
+        ret |= 1 << i;
+    }
+    ret
+}
+
+pub fn bits_to_elements(bits: i128) -> Vec<usize> {
+    let mut ret = Vec::new();
+    for i in 0..128 {
+        if (bits & (1 << i)) != 0 {
+            ret.push(i);
+        }
+    }
+    ret
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_get_elements() {
+        let mol = ROMol::from_smiles("CCO");
+        let got = bits_to_elements(get_elements(&mol));
+        let want = vec![6, 8];
+        assert_eq!(got, want);
+    }
+}
