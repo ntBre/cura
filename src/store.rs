@@ -12,23 +12,28 @@ pub fn store(table: &mut Table, molecule_file: &str) {
 
     let progress = AtomicUsize::new(0);
 
-    let map_op = |mol: Result<ROMol, RDError>| -> Option<Molecule> {
+    let map_op = |mol: Result<ROMol, RDError>| -> Vec<Molecule> {
         let cur = progress.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
         if cur % PROGRESS_INTERVAL == 0 {
             eprint!("{cur} complete\r");
         }
-        let Ok(mut mol) = mol else {
+        let Ok(mol) = mol else {
             warn!("error loading molecule, skipping");
-            return None;
+            return Vec::new();
         };
-        mol.openff_clean();
-
-        Some(Molecule {
-            smiles: mol.to_smiles(),
-            natoms: mol.num_atoms(),
-            elements: get_elements(&mol),
-            moldata: mol.to_json(),
-        })
+        mol.to_smiles()
+            .split('.')
+            .map(|s| {
+                let mut mol = ROMol::from_smiles(s);
+                mol.openff_clean();
+                Molecule {
+                    smiles: mol.to_smiles(),
+                    natoms: mol.num_atoms(),
+                    elements: get_elements(&mol),
+                    moldata: mol.to_json(),
+                }
+            })
+            .collect()
     };
     let results: Vec<_> = m.into_iter().par_bridge().flat_map(map_op).collect();
 
