@@ -2,7 +2,10 @@ CHEMBL_BASE := /home/brent/omsf/chembl
 CHEMBL := $(CHEMBL_BASE)/data/chembl_33.sdf
 
 clippy:
-	cargo clippy
+	cargo clippy --workspace --tests
+
+test:
+	cargo test
 
 # Usage:
 # $(call run, SUBCOMMAND, ARGS...)
