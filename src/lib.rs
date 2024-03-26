@@ -46,6 +46,8 @@ pub fn bits_to_elements(bits: i128) -> Vec<usize> {
 
 #[cfg(test)]
 mod tests {
+    use self::{store::store, table::Table};
+
     use super::*;
 
     #[test]
@@ -53,6 +55,17 @@ mod tests {
         let mol = ROMol::from_smiles("CCO");
         let got = bits_to_elements(get_elements(&mol));
         let want = vec![6, 8];
+        assert_eq!(got, want);
+    }
+
+    #[test]
+    fn test_store() {
+        let tmp = tempfile::NamedTempFile::new().unwrap();
+        let mut table = Table::create(tmp.path()).unwrap();
+        // this file has multiple entries, but only one SMILES
+        store(&mut table, "testfiles/small.sdf");
+        let got = table.get_moldata().unwrap().len();
+        let want = 1;
         assert_eq!(got, want);
     }
 }
