@@ -1,5 +1,5 @@
 use std::{
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     path::Path,
     sync::{atomic::AtomicUsize, mpsc},
     thread,
@@ -7,10 +7,42 @@ use std::{
 
 use log::{info, trace};
 use rayon::iter::{ParallelBridge, ParallelIterator};
-use rdkit_rs::ROMol;
-use rsearch::{find_matches, load_want, print_output, write_output};
+use rdkit_rs::{find_smarts_matches_mol, ROMol};
+use rsearch::{load_want, print_output, write_output};
 
 use crate::{load_forcefield, table::Table, PROGRESS_INTERVAL};
+
+/// returns a map of chemical environments in `mol` to their matching parameter
+/// ids. matching starts with the first parameter and proceeds through the
+/// whole sequence of parameters, so this should follow the SMIRNOFF typing
+/// rules
+pub fn find_matches_full(
+    params: &[(String, ROMol)],
+    mol: &ROMol,
+) -> HashMap<Vec<usize>, String> {
+    let mut matches = HashMap::new();
+    for (id, smirks) in params {
+        let env_matches = find_smarts_matches_mol(mol, smirks);
+        for mut mat in env_matches {
+            if mat.first().unwrap() > mat.last().unwrap() {
+                mat.reverse();
+            }
+            trace!("{mat:?} => {id}");
+            matches.insert(mat, id.clone());
+        }
+    }
+    matches
+}
+
+/// returns the set of parameter ids matching `mol`. matching starts with the
+/// first parameter and proceeds through the whole sequence of parameters, so
+/// this should follow the SMIRNOFF typing rules
+pub fn find_matches(
+    params: &[(String, ROMol)],
+    mol: &ROMol,
+) -> HashSet<String> {
+    find_matches_full(params, mol).into_values().collect()
+}
 
 pub fn query(
     table: Table,
