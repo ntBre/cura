@@ -3,7 +3,6 @@ use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use rdkit_rs::{fingerprint::tanimoto, ROMol};
 use rsearch::{
     cluster::{dbscan, Label},
-    find_matches_full,
     utils::{fragment, make_fps, Report},
 };
 use std::{
@@ -15,7 +14,7 @@ use std::{
 
 use log::{info, trace};
 
-use crate::table::Table;
+use crate::{find_matches_full, table::Table};
 
 type Pid = String;
 type Smirks = String;
