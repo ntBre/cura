@@ -15,6 +15,13 @@ pub fn query(
     output_dir: Option<String>,
 ) {
     info!("loading moldata from database");
+    // TODO loading all of the SMILES from the database at one time feels really
+    // bad to me. Ideally this would be streaming to reduce memory usage, but I
+    // can't figure out both how to make it streaming (possible by passing
+    // closure to the code running query_map) and parallelized (current code
+    // with rayon). possibly the best way to do this would be spawning a
+    // separate thread for the db query and sending the results back to the main
+    // thread where rayon is running via a channel
     let data = table.get_smiles().unwrap();
 
     info!("loading force field and parameters");
