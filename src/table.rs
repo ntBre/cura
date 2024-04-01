@@ -71,4 +71,23 @@ impl Table {
 
         Ok(ret)
     }
+
+    pub fn with_records<T, F>(&self, mut f: F) -> RResult<Vec<T>>
+    where
+        F: FnMut(Molecule) -> T,
+    {
+        let mut stmt = self.conn.prepare(include_str!("get_smiles.sql"))?;
+        let ret = stmt
+            .query_map([], |row| {
+                Ok(f(Molecule {
+                    smiles: row.get(1)?,
+                    natoms: row.get(2)?,
+                    elements: row.get(3)?,
+                }))
+            })?
+            .flatten()
+            .collect();
+
+        Ok(ret)
+    }
 }
