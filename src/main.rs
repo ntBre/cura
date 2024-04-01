@@ -98,13 +98,9 @@ fn main() {
             parameter_type,
             search_params,
             output_dir,
-        } => query(
-            &mut table,
-            forcefield,
-            parameter_type,
-            search_params,
-            output_dir,
-        ),
+        } => {
+            query(table, forcefield, parameter_type, search_params, output_dir)
+        }
         Commands::Parse {
             input,
             forcefield,

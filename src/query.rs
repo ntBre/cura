@@ -1,28 +1,28 @@
-use std::{collections::HashMap, path::Path, sync::atomic::AtomicUsize};
+use std::{
+    collections::HashMap,
+    path::Path,
+    sync::{atomic::AtomicUsize, mpsc},
+    thread,
+};
 
 use log::{info, trace};
-use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
+use rayon::iter::{ParallelBridge, ParallelIterator};
 use rdkit_rs::ROMol;
 use rsearch::{find_matches, load_want, print_output, write_output};
 
 use crate::{load_forcefield, table::Table, PROGRESS_INTERVAL};
 
 pub fn query(
-    table: &mut Table,
+    table: Table,
     forcefield: String,
     parameter_type: String,
     search_params: String,
     output_dir: Option<String>,
 ) {
     info!("loading moldata from database");
-    // TODO loading all of the SMILES from the database at one time feels really
-    // bad to me. Ideally this would be streaming to reduce memory usage, but I
-    // can't figure out both how to make it streaming (possible by passing
-    // closure to the code running query_map) and parallelized (current code
-    // with rayon). possibly the best way to do this would be spawning a
-    // separate thread for the db query and sending the results back to the main
-    // thread where rayon is running via a channel
-    let data = table.get_smiles().unwrap();
+    const CHAN_SIZE: usize = 1024;
+    let (sender, receiver) = mpsc::sync_channel::<String>(CHAN_SIZE);
+    let th = thread::spawn(move || table.send_smiles(sender));
 
     info!("loading force field and parameters");
     let params = load_forcefield(forcefield, parameter_type);
@@ -31,12 +31,12 @@ pub fn query(
 
     info!("processing data");
     let progress = AtomicUsize::new(0);
-    let map_op = |smiles: &String| -> Vec<(String, String)> {
+    let map_op = |smiles: String| -> Vec<(String, String)> {
         let cur = progress.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
         if cur % PROGRESS_INTERVAL == 0 {
             eprint!("{cur} complete\r");
         }
-        let mut mol = ROMol::from_smiles(smiles);
+        let mut mol = ROMol::from_smiles(&smiles);
 
         trace!("calling clean");
         mol.openff_clean(); // avoids pre-condition violation on match
@@ -50,7 +50,10 @@ pub fn query(
         }
         res
     };
-    let results: Vec<_> = data.par_iter().flat_map(map_op).collect();
+    let results: Vec<_> =
+        receiver.into_iter().par_bridge().flat_map(map_op).collect();
+
+    th.join().unwrap().unwrap();
 
     let mut res: HashMap<String, Vec<String>> = HashMap::new();
     for (pid, mol) in results {

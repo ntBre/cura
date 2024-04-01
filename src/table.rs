@@ -1,4 +1,5 @@
 use std::path::Path;
+use std::sync::mpsc::SyncSender;
 
 use rusqlite::Connection;
 use rusqlite::Result as RResult;
@@ -70,6 +71,20 @@ impl Table {
             .collect();
 
         Ok(ret)
+    }
+
+    pub fn send_smiles(&self, sender: SyncSender<String>) -> RResult<()> {
+        let mut stmt = self.conn.prepare(include_str!("get_smiles.sql"))?;
+        for s in stmt
+            .query_map([], |row| Ok(row.get(0).unwrap()))
+            .unwrap()
+            .flatten()
+        {
+            sender
+                .send(s)
+                .map_err(|_| rusqlite::Error::ExecuteReturnedResults)?;
+        }
+        Ok(())
     }
 
     pub fn with_records<T, F>(&self, mut f: F) -> RResult<Vec<T>>
