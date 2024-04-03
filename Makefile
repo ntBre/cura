@@ -10,6 +10,9 @@ test:
 clean:
 	rm try.sqlite
 
+doc:
+	cargo doc --open
+
 # Usage:
 # $(call run, SUBCOMMAND, ARGS...)
 run = cargo run --release -- $1 $2
