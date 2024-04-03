@@ -5,7 +5,7 @@ clippy:
 	cargo clippy --workspace --tests
 
 test:
-	cargo test
+	cargo test -- $(ARGS)
 
 clean:
 	rm try.sqlite
