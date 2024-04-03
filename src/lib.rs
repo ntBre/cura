@@ -37,7 +37,7 @@ pub struct Molecule {
     elements: i128,
 }
 
-#[derive(serde::Serialize)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Match {
     pub pid: Pid,
     pub smirks: Smirks,

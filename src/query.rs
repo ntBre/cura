@@ -89,7 +89,6 @@ pub fn query(
 
             matches
                 .intersection(&want)
-                .into_iter()
                 .map(|pid| (pid.to_owned(), mol.id.unwrap()))
                 .collect()
         };

@@ -106,6 +106,6 @@ async fn main() {
             parameter_type,
             target,
         } => parse(&mut table, input, forcefield, parameter_type, target),
-        Commands::Board => board().await,
+        Commands::Board => board(table).await,
     }
 }

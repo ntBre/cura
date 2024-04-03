@@ -13,7 +13,7 @@ use clustrs::{dbscan, Label};
 use log::debug;
 use openff_toolkit::ForceField;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
-use rdkit_rs::{find_smarts_matches, fingerprint::tanimoto, ROMol};
+use rdkit_rs::{fingerprint::tanimoto, ROMol};
 
 use crate::{
     board::{
@@ -46,32 +46,6 @@ pub(crate) async fn index(
     .render()
     .unwrap()
     .into()
-}
-
-/// load a sequence of SMILES from file, splitting on `.` to separate ionic
-/// fragments, checking that `smarts` matches (NOTE that this is not a full
-/// SMIRNOFF application check, just that the pattern matches at all), and
-/// filtering out duplicates
-fn load_smiles(
-    filename: impl AsRef<std::path::Path>,
-    smarts: &str,
-) -> Vec<String> {
-    let mut ret: Vec<String> = read_to_string(filename)
-        .unwrap()
-        .lines()
-        .flat_map(|s| s.split('.').map(ROMol::from_smiles))
-        .filter_map(|mut mol| {
-            mol.openff_clean();
-            if !find_smarts_matches(&mol, smarts).is_empty() {
-                Some(mol.to_smiles())
-            } else {
-                None
-            }
-        })
-        .collect();
-    ret.sort();
-    ret.dedup();
-    ret
 }
 
 /// returns the generated clustering report from [Report::write] as a String,
@@ -184,14 +158,21 @@ pub(crate) async fn param(
     Query(params): Query<HashMap<String, String>>,
 ) -> Html<String> {
     let mut state = state.lock().unwrap();
+    let ffname = state.cli.forcefield.clone();
     let param: Parameter = state.param_by_id(&pid).unwrap().clone();
     let smarts = state.pid_to_smarts[&pid].clone();
     let smiles_list = {
-        let ps = state.param_states.entry(pid.clone()).or_default();
-        if ps.smiles_list.is_none() {
-            let collect = load_smiles(&param.smiles, &smarts);
-            ps.smiles_list = Some(collect);
+        let ps = state.param_states.get(&pid);
+        if ps.is_none() {
+            let collect =
+                state.table.get_smiles_matching(&ffname, &pid).unwrap();
+            state
+                .param_states
+                .entry(pid.clone())
+                .or_default()
+                .smiles_list = Some(collect);
         }
+        let ps = state.param_states.get_mut(&pid).unwrap();
         ps.smiles_list.clone().unwrap()
     };
     // invalidate the cached page if max is provided. TODO save max_draw so that

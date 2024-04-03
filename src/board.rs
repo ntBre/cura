@@ -9,6 +9,8 @@ use openff_toolkit::ForceField;
 use templates::Param;
 use tokio::net::TcpListener;
 
+use crate::table::Table;
+
 mod config;
 mod handlers;
 mod templates;
@@ -24,6 +26,7 @@ struct AppState {
     cli: Config,
     pid_to_smarts: HashMap<String, String>,
     param_states: HashMap<String, ParamState>,
+    table: Table,
 }
 
 impl AppState {
@@ -38,7 +41,7 @@ impl AppState {
     }
 }
 
-pub async fn board() {
+pub async fn board(table: Table) {
     let cli = config::Config::load("testfiles/fingerprint.toml");
 
     let pid_to_smarts: HashMap<String, String> =
@@ -55,6 +58,7 @@ pub async fn board() {
         cli,
         param_states: HashMap::new(),
         pid_to_smarts,
+        table,
     }));
 
     let app = Router::new()

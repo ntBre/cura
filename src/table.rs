@@ -7,6 +7,7 @@ use rusqlite::Result as RResult;
 
 use crate::ForceField;
 use crate::Molecule;
+use crate::Pid;
 use crate::PROGRESS_INTERVAL;
 
 pub struct Table {
@@ -77,6 +78,57 @@ impl Table {
         let mut stmt = conn.prepare(include_str!("insert_forcefield.sql"))?;
         stmt.execute((name, blob))?;
         Ok(())
+    }
+
+    /// return the SMILES from the molecule table matching pid in the force
+    /// field table
+    pub fn get_smiles_matching(
+        &self,
+        ffname: &str,
+        pid: &Pid,
+    ) -> RResult<Vec<String>> {
+        let conn = self.conn();
+        let mut stmt = conn.prepare(include_str!("get_smiles_matching.sql"))?;
+        let ids: Vec<usize> = stmt
+            .query_map((ffname,), |row| {
+                Ok(ForceField {
+                    id: row.get(0)?,
+                    name: row.get(1)?,
+                    matches: postcard::from_bytes(
+                        &row.get::<usize, Vec<u8>>(2)?,
+                    )
+                    .unwrap(),
+                })
+            })?
+            .flatten() // filter out any errors
+            .flat_map(|ff| {
+                ff.matches.into_iter().map(|m| {
+                    if &m.pid == pid {
+                        m.molecules
+                    } else {
+                        Vec::new()
+                    }
+                })
+            })
+            .flatten()
+            .collect();
+
+        if ids.is_empty() {
+            return Ok(Vec::new());
+        }
+
+        // taken from rusqlite paramsfromiter example
+        let mut vars = "?,".repeat(ids.len());
+        vars.pop(); // remove trailing comma
+        let sql =
+            format!("select smiles from molecules where id in ({})", vars,);
+        let mut stmt = conn.prepare(&sql)?;
+        let ret = stmt
+            .query_map([], |row| Ok(row.get(0).unwrap()))
+            .unwrap()
+            .flatten()
+            .collect();
+        Ok(ret)
     }
 
     /// Return a flattened vector of SMILES from the database.
