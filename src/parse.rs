@@ -15,10 +15,7 @@ use std::{
 
 use log::{debug, info, trace};
 
-use crate::{find_matches_full, table::Table};
-
-type Pid = String;
-type Smirks = String;
+use crate::{find_matches_full, table::Table, Pid, Smirks};
 
 pub struct Report<'a> {
     pub args: Vec<String>,

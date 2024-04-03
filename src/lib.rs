@@ -11,6 +11,12 @@ pub mod query;
 pub mod store;
 pub mod table;
 
+/// Parameter ID in a force field
+type Pid = String;
+
+/// SMIRKS string
+type Smirks = String;
+
 /// Database record
 pub struct Molecule {
     /// None when inserting into the database but set when retrieving
