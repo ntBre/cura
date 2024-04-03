@@ -2,6 +2,8 @@ use std::path::Path;
 use std::sync::mpsc::SyncSender;
 use std::sync::Mutex;
 
+use log::debug;
+use rusqlite::params_from_iter;
 use rusqlite::Connection;
 use rusqlite::Result as RResult;
 
@@ -114,6 +116,7 @@ impl Table {
             .collect();
 
         if ids.is_empty() {
+            debug!("no ids found for {pid} in {ffname}");
             return Ok(Vec::new());
         }
 
@@ -121,10 +124,10 @@ impl Table {
         let mut vars = "?,".repeat(ids.len());
         vars.pop(); // remove trailing comma
         let sql =
-            format!("select smiles from molecules where id in ({})", vars,);
+            format!("select smiles from molecules where id in ({})", vars);
         let mut stmt = conn.prepare(&sql)?;
         let ret = stmt
-            .query_map([], |row| Ok(row.get(0).unwrap()))
+            .query_map(params_from_iter(ids), |row| Ok(row.get(0).unwrap()))
             .unwrap()
             .flatten()
             .collect();

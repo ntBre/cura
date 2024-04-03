@@ -1,5 +1,5 @@
 # global configuration
-forcefield = "testfiles/tm.v2.offxml"
+forcefield = "openff-2.1.0.offxml"
 radius = 4
 max_atoms = 80
 

@@ -37,7 +37,7 @@ pub struct Molecule {
     elements: i128,
 }
 
-#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct Match {
     pub pid: Pid,
     pub smirks: Smirks,
@@ -46,6 +46,7 @@ pub struct Match {
 }
 
 /// Force field database record
+#[derive(Debug)]
 pub struct ForceField {
     pub id: Option<usize>,
     pub name: String,
