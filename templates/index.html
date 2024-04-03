@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Welcome to chembl-search</h1>
+
+<p>Please select a parameter from the list below:</p>
+
+<table>
+  <tr>
+	<th>Parameter</th>
+	<th>Clusters</th>
+  </tr>
+  {% for (i, pid) in parameter_ids.iter().enumerate() %}
+  <tr>
+	<td><a href="param/{{pid}}">{{pid}}</a></td>
+	<td>{{cluster_counts[i]}}</td>
+  </tr>
+  {% endfor %}
+</table>
+
+{% endblock %}

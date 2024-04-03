@@ -8,7 +8,9 @@
 use std::path::PathBuf;
 
 use clap::{Parser, Subcommand};
-use cura::{parse::parse, query::query, store::store, table::Table};
+use cura::{
+    board::board, parse::parse, query::query, store::store, table::Table,
+};
 
 #[derive(Parser)]
 struct Cli {
@@ -27,7 +29,9 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     /// Store molecules from the SDF into the database
-    Store { molecule_file: String },
+    Store {
+        molecule_file: String,
+    },
 
     /// Query existing molecules in the database for matches to OpenFF
     /// parameters in a force field
@@ -77,9 +81,12 @@ enum Commands {
         /// or at least multiple files
         input: PathBuf,
     },
+
+    Board,
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     env_logger::init();
 
     let cli = Cli::parse();
@@ -111,5 +118,6 @@ fn main() {
             parameter_type,
             target,
         } => parse(&mut table, input, forcefield, parameter_type, target),
+        Commands::Board => board().await,
     }
 }
