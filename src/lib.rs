@@ -5,7 +5,7 @@ use std::{
 };
 
 use log::{debug, info, trace};
-use openff_toolkit::ForceField;
+use openff_toolkit::ForceField as OFF;
 use rayon::iter::{
     IntoParallelIterator, IntoParallelRefIterator, ParallelIterator,
 };
@@ -37,6 +37,20 @@ pub struct Molecule {
     elements: i128,
 }
 
+pub struct Match {
+    pub pid: Pid,
+    pub smirks: Smirks,
+    /// Database row IDs in the [Molecule]s table
+    pub molecules: Vec<usize>,
+}
+
+/// Force field database record
+pub struct ForceField {
+    pub id: Option<usize>,
+    pub name: String,
+    pub matches: Vec<Match>,
+}
+
 impl Molecule {
     pub fn new(smiles: String, natoms: usize, elements: i128) -> Self {
         Self {
@@ -55,7 +69,7 @@ fn load_forcefield(
     forcefield: String,
     parameter_type: String,
 ) -> Vec<(String, ROMol)> {
-    ForceField::load(&forcefield)
+    OFF::load(&forcefield)
         .unwrap()
         .get_parameter_handler(&parameter_type)
         .unwrap()

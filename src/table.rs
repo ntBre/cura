@@ -16,7 +16,8 @@ impl Table {
     /// Open a new database [Connection] and create a `molecules` table there.
     pub fn create(path: impl AsRef<Path>) -> RResult<Self> {
         let conn = Connection::open(path)?;
-        conn.execute(include_str!("create_table.sql"), ())?;
+        conn.execute(include_str!("create_molecules.sql"), ())?;
+        conn.execute(include_str!("create_forcefields.sql"), ())?;
         Ok(Self {
             conn: Mutex::new(conn),
         })
