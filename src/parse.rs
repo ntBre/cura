@@ -166,6 +166,9 @@ pub fn fragment(mols: Vec<ROMol>) -> Vec<ROMol> {
     ret
 }
 
+/// Load a sequence of molecules from `smiles`, optionally fragmenting them with
+/// the RECAP algorithm, and filtering out any larger than `max_atoms` or not
+/// matching `mol_map[pid]`.
 pub fn load_mols(
     smiles: Vec<&str>,
     max_atoms: usize,
