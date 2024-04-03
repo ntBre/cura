@@ -44,12 +44,17 @@ impl Table {
         for (
             i,
             Molecule {
+                id,
                 smiles,
                 natoms,
                 elements,
             },
         ) in mols.iter().enumerate()
         {
+            assert!(
+                id.is_none(),
+                "attempted to insert existing molecule back into database"
+            );
             tx.execute(
                 include_str!("insert_molecule.sql"),
                 (smiles, natoms, elements),
@@ -91,10 +96,11 @@ impl Table {
     where
         F: FnMut(Molecule) -> T,
     {
-        let mut stmt = self.conn.prepare(include_str!("get_smiles.sql"))?;
+        let mut stmt = self.conn.prepare(include_str!("get_molecules.sql"))?;
         let ret = stmt
             .query_map([], |row| {
                 Ok(f(Molecule {
+                    id: row.get(0)?,
                     smiles: row.get(1)?,
                     natoms: row.get(2)?,
                     elements: row.get(3)?,

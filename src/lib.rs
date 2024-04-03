@@ -12,9 +12,22 @@ pub mod table;
 
 /// Database record
 pub struct Molecule {
+    /// None when inserting into the database but set when retrieving
+    id: Option<usize>,
     smiles: String,
     natoms: usize,
     elements: i128,
+}
+
+impl Molecule {
+    pub fn new(smiles: String, natoms: usize, elements: i128) -> Self {
+        Self {
+            id: None,
+            smiles,
+            natoms,
+            elements,
+        }
+    }
 }
 
 /// Load an OpenFF [ForceField] from `forcefield` and return a sequence of
@@ -107,5 +120,8 @@ mod tests {
         let got = table.get_smiles().unwrap().len();
         let want = 1;
         assert_eq!(got, want);
+
+        let res = table.with_records(|mol| mol.natoms).unwrap();
+        assert_eq!(res.len(), 1);
     }
 }

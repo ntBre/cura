@@ -27,11 +27,11 @@ pub fn store(table: &mut Table, molecule_file: &str) {
             .map(|s| {
                 let mut mol = ROMol::from_smiles(s);
                 mol.openff_clean();
-                Molecule {
-                    smiles: mol.to_smiles(),
-                    natoms: mol.num_atoms(),
-                    elements: get_elements(&mol),
-                }
+                Molecule::new(
+                    mol.to_smiles(),
+                    mol.num_atoms(),
+                    get_elements(&mol),
+                )
             })
             .collect()
     };
