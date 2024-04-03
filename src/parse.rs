@@ -187,7 +187,6 @@ pub fn load_mols(
 
     let too_big = AtomicUsize::new(0);
     let no_match = AtomicUsize::new(0);
-    let overlap = AtomicUsize::new(0);
     let fragments = AtomicUsize::new(0);
 
     let mut ret: Vec<_> = mols
@@ -224,10 +223,9 @@ pub fn load_mols(
     ret.dedup_by_key(|(smiles, _mol)| smiles.clone());
 
     info!(
-        "filtered {} for size, {} for smirks, {} for inchi, {} for duplicates",
+        "filtered {} for size, {} for smirks, {} for duplicates",
         too_big.into_inner(),
         no_match.into_inner(),
-        overlap.into_inner(),
         presort - ret.len(),
     );
 
