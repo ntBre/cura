@@ -345,6 +345,8 @@ pub fn bits_to_elements(bits: i128) -> Vec<usize> {
 
 #[cfg(test)]
 mod tests {
+    use crate::query::query;
+
     use self::{store::store, table::Table};
 
     use super::*;
@@ -366,6 +368,14 @@ mod tests {
         let got = table.get_smiles().unwrap().len();
         let want = 1;
         assert_eq!(got, want);
+
+        query(
+            &mut table,
+            "openff-2.1.0.offxml".to_string(),
+            "ProperTorsions".to_string(),
+            "testfiles/want.params".to_string(),
+            None,
+        );
 
         let res = table.with_molecules(|mol| mol.natoms).unwrap();
         assert_eq!(res.len(), 1);
