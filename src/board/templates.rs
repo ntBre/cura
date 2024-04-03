@@ -34,3 +34,9 @@ pub(crate) struct Param {
     pub pid: String,
     pub body: Body,
 }
+
+#[derive(Template)]
+#[template(path = "error.html")]
+pub(crate) struct ErrorPage {
+    pub(crate) pid: String,
+}
