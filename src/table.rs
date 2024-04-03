@@ -23,14 +23,6 @@ impl Table {
         })
     }
 
-    /// Open a [Connection] to an existing database at `path`.
-    pub fn open(path: impl AsRef<Path>) -> RResult<Self> {
-        let conn = Connection::open(path)?;
-        Ok(Self {
-            conn: Mutex::new(conn),
-        })
-    }
-
     /// Insert a single molecule entry into the database.
     pub fn insert_molecule(
         &self,
