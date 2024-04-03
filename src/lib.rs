@@ -37,6 +37,7 @@ pub struct Molecule {
     elements: i128,
 }
 
+#[derive(serde::Serialize)]
 pub struct Match {
     pub pid: Pid,
     pub smirks: Smirks,
@@ -66,10 +67,10 @@ impl Molecule {
 /// parameter_id, SMIRKS pattern pairs corresponding to its `parameter_type`
 /// [ParameterHandler].
 fn load_forcefield(
-    forcefield: String,
+    forcefield: &str,
     parameter_type: String,
 ) -> Vec<(String, ROMol)> {
-    OFF::load(&forcefield)
+    OFF::load(forcefield)
         .unwrap()
         .get_parameter_handler(&parameter_type)
         .unwrap()
@@ -374,7 +375,6 @@ mod tests {
             "openff-2.1.0.offxml".to_string(),
             "ProperTorsions".to_string(),
             "testfiles/want.params".to_string(),
-            None,
         );
 
         let res = table.with_molecules(|mol| mol.natoms).unwrap();

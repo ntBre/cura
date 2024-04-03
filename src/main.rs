@@ -51,11 +51,6 @@ enum Commands {
         /// provided forcefield.
         #[arg(short, long, default_value = "want.params")]
         search_params: String,
-
-        /// Where to write output SMILES files, one for each input parameter. If
-        /// false, print the output to stdout.
-        #[arg(short, long)]
-        output_dir: Option<String>,
     },
 
     /// Parse the output from `cura query`, then fragment, fingerprint, and
@@ -104,14 +99,7 @@ async fn main() {
             forcefield,
             parameter_type,
             search_params,
-            output_dir,
-        } => query(
-            &mut table,
-            forcefield,
-            parameter_type,
-            search_params,
-            output_dir,
-        ),
+        } => query(&mut table, forcefield, parameter_type, search_params),
         Commands::Parse {
             input,
             forcefield,

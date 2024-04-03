@@ -6,11 +6,13 @@ use std::{
 };
 
 use log::{info, trace};
+use openff_toolkit::ForceField as OFF;
 use rayon::iter::{ParallelBridge, ParallelIterator};
 use rdkit_rs::ROMol;
 
 use crate::{
-    find_matches, load_forcefield, table::Table, Molecule, PROGRESS_INTERVAL,
+    find_matches, load_forcefield, table::Table, ForceField, Match, Molecule,
+    Pid, Smirks, PROGRESS_INTERVAL,
 };
 
 /// load a sequence of newline-separated entries from `path` and collect them
@@ -47,22 +49,31 @@ pub fn query(
     forcefield: String,
     parameter_type: String,
     search_params: String,
-    output_dir: Option<String>,
 ) {
+    info!("loading force field and parameters");
+
+    // TODO sad to load this twice but I want to store the smirks in the db
+    let pid_to_smirks: HashMap<Pid, Smirks> = OFF::load(&forcefield)
+        .unwrap()
+        .get_parameter_handler(&parameter_type)
+        .unwrap()
+        .parameters()
+        .into_iter()
+        .map(|p| (p.id(), p.smirks()))
+        .collect();
+
+    let params = load_forcefield(&forcefield, parameter_type);
+
+    let want = load_want(&search_params);
     info!("loading moldata from database");
     const CHAN_SIZE: usize = 1024;
     let (sender, receiver) = mpsc::sync_channel(CHAN_SIZE);
     let results: Vec<_> = thread::scope(|s| {
         s.spawn(|| table.send_molecules(sender));
 
-        info!("loading force field and parameters");
-        let params = load_forcefield(forcefield, parameter_type);
-
-        let want = load_want(&search_params);
-
         info!("processing data");
         let progress = AtomicUsize::new(0);
-        let map_op = |mol: Molecule| -> Vec<(String, String)> {
+        let map_op = |mol: Molecule| -> Vec<(Pid, usize)> {
             let cur =
                 progress.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
             if cur % PROGRESS_INTERVAL == 0 {
@@ -76,31 +87,33 @@ pub fn query(
             trace!("calling find_matches");
             let matches = find_matches(&params, &romol);
 
-            let mut res: Vec<(String, String)> = Vec::new();
-            for pid in matches.intersection(&want) {
-                res.push((pid.to_string(), mol.smiles.clone()));
-            }
-            res
+            matches
+                .intersection(&want)
+                .into_iter()
+                .map(|pid| (pid.to_owned(), mol.id.unwrap()))
+                .collect()
         };
 
         receiver.into_iter().par_bridge().flat_map(map_op).collect()
     });
 
-    let mut res: HashMap<String, Vec<String>> = HashMap::new();
-    for (pid, mol) in results {
-        res.entry(pid.to_string()).or_default().push(mol);
+    let mut res: HashMap<Pid, Match> = HashMap::new();
+    for (pid, mol_id) in results {
+        res.entry(pid.to_string())
+            .or_insert(Match {
+                smirks: pid_to_smirks[&pid].to_owned(),
+                pid,
+                molecules: Vec::new(),
+            })
+            .molecules
+            .push(mol_id);
     }
 
-    if let Some(dir) = output_dir {
-        let dir = Path::new(&dir);
-        if !dir.exists() && std::fs::create_dir_all(dir).is_err() {
-            eprintln!("failed to create output dir {dir:?}");
-            eprintln!("falling back to stdout");
-            print_output(res);
-            return;
-        }
-        write_output(dir, res);
-    } else {
-        print_output(res);
-    }
+    table
+        .insert_forcefield(ForceField {
+            id: None,
+            name: forcefield,
+            matches: res.into_values().collect(),
+        })
+        .unwrap();
 }

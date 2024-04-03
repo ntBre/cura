@@ -5,6 +5,7 @@ use std::sync::Mutex;
 use rusqlite::Connection;
 use rusqlite::Result as RResult;
 
+use crate::ForceField;
 use crate::Molecule;
 use crate::PROGRESS_INTERVAL;
 
@@ -35,6 +36,10 @@ impl Table {
         Ok(())
     }
 
+    fn conn(&self) -> std::sync::MutexGuard<'_, Connection> {
+        self.conn.lock().unwrap()
+    }
+
     /// Insert a sequence of SMILES, moldata pairs into the database in a single
     /// transaction.
     pub fn insert_molecules(&mut self, mols: Vec<Molecule>) -> RResult<()> {
@@ -63,6 +68,15 @@ impl Table {
             }
         }
         tx.commit()
+    }
+
+    pub fn insert_forcefield(&mut self, forcefield: ForceField) -> RResult<()> {
+        let conn = self.conn();
+        let name = &forcefield.name;
+        let blob = postcard::to_stdvec(&forcefield.matches).unwrap();
+        let mut stmt = conn.prepare(include_str!("insert_forcefield.sql"))?;
+        stmt.execute((name, blob))?;
+        Ok(())
     }
 
     /// Return a flattened vector of SMILES from the database.

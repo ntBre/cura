@@ -25,7 +25,7 @@ endef
 store:
 	$(call run, store, $(CHEMBL))
 
-query_args := -s $(CHEMBL_BASE)/input/want.params -o output
+query_args := -s $(CHEMBL_BASE)/input/want.params
 
 query:
 	$(call run, query, $(query_args))
