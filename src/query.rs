@@ -9,7 +9,9 @@ use log::{info, trace};
 use rayon::iter::{ParallelBridge, ParallelIterator};
 use rdkit_rs::ROMol;
 
-use crate::{find_matches, load_forcefield, table::Table, PROGRESS_INTERVAL};
+use crate::{
+    find_matches, load_forcefield, table::Table, Molecule, PROGRESS_INTERVAL,
+};
 
 /// load a sequence of newline-separated entries from `path` and collect them
 /// into a HashSet
@@ -49,9 +51,9 @@ pub fn query(
 ) {
     info!("loading moldata from database");
     const CHAN_SIZE: usize = 1024;
-    let (sender, receiver) = mpsc::sync_channel::<String>(CHAN_SIZE);
+    let (sender, receiver) = mpsc::sync_channel(CHAN_SIZE);
     let results: Vec<_> = thread::scope(|s| {
-        s.spawn(|| table.send_smiles(sender));
+        s.spawn(|| table.send_molecules(sender));
 
         info!("loading force field and parameters");
         let params = load_forcefield(forcefield, parameter_type);
@@ -60,23 +62,23 @@ pub fn query(
 
         info!("processing data");
         let progress = AtomicUsize::new(0);
-        let map_op = |smiles: String| -> Vec<(String, String)> {
+        let map_op = |mol: Molecule| -> Vec<(String, String)> {
             let cur =
                 progress.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
             if cur % PROGRESS_INTERVAL == 0 {
                 eprint!("{cur} complete\r");
             }
-            let mut mol = ROMol::from_smiles(&smiles);
+            let mut romol = ROMol::from_smiles(&mol.smiles);
 
             trace!("calling clean");
-            mol.openff_clean(); // avoids pre-condition violation on match
+            romol.openff_clean(); // avoids pre-condition violation on match
 
             trace!("calling find_matches");
-            let matches = find_matches(&params, &mol);
+            let matches = find_matches(&params, &romol);
 
             let mut res: Vec<(String, String)> = Vec::new();
             for pid in matches.intersection(&want) {
-                res.push((pid.to_string(), smiles.clone()));
+                res.push((pid.to_string(), mol.smiles.clone()));
             }
             res
         };

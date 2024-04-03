@@ -100,6 +100,27 @@ impl Table {
         Ok(())
     }
 
+    pub fn send_molecules(&self, sender: SyncSender<Molecule>) -> RResult<()> {
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(include_str!("get_molecules.sql"))?;
+        for s in stmt
+            .query_map([], |row| {
+                Ok(Molecule {
+                    id: row.get(0)?,
+                    smiles: row.get(1)?,
+                    natoms: row.get(2)?,
+                    elements: row.get(3)?,
+                })
+            })?
+            .flatten()
+        {
+            sender
+                .send(s)
+                .map_err(|_| rusqlite::Error::ExecuteReturnedResults)?;
+        }
+        Ok(())
+    }
+
     pub fn with_molecules<T, F>(&self, mut f: F) -> RResult<Vec<T>>
     where
         F: FnMut(Molecule) -> T,
