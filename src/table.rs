@@ -92,7 +92,7 @@ impl Table {
         Ok(())
     }
 
-    pub fn with_records<T, F>(&self, mut f: F) -> RResult<Vec<T>>
+    pub fn with_molecules<T, F>(&self, mut f: F) -> RResult<Vec<T>>
     where
         F: FnMut(Molecule) -> T,
     {

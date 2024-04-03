@@ -121,7 +121,7 @@ mod tests {
         let want = 1;
         assert_eq!(got, want);
 
-        let res = table.with_records(|mol| mol.natoms).unwrap();
+        let res = table.with_molecules(|mol| mol.natoms).unwrap();
         assert_eq!(res.len(), 1);
     }
 }
