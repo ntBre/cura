@@ -41,7 +41,7 @@ pub fn write_output(dir: impl AsRef<Path>, res: HashMap<String, Vec<String>>) {
 }
 
 pub fn query(
-    table: Table,
+    table: &mut Table,
     forcefield: String,
     parameter_type: String,
     search_params: String,
@@ -50,38 +50,39 @@ pub fn query(
     info!("loading moldata from database");
     const CHAN_SIZE: usize = 1024;
     let (sender, receiver) = mpsc::sync_channel::<String>(CHAN_SIZE);
-    let th = thread::spawn(move || table.send_smiles(sender));
+    let results: Vec<_> = thread::scope(|s| {
+        s.spawn(|| table.send_smiles(sender));
 
-    info!("loading force field and parameters");
-    let params = load_forcefield(forcefield, parameter_type);
+        info!("loading force field and parameters");
+        let params = load_forcefield(forcefield, parameter_type);
 
-    let want = load_want(&search_params);
+        let want = load_want(&search_params);
 
-    info!("processing data");
-    let progress = AtomicUsize::new(0);
-    let map_op = |smiles: String| -> Vec<(String, String)> {
-        let cur = progress.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-        if cur % PROGRESS_INTERVAL == 0 {
-            eprint!("{cur} complete\r");
-        }
-        let mut mol = ROMol::from_smiles(&smiles);
+        info!("processing data");
+        let progress = AtomicUsize::new(0);
+        let map_op = |smiles: String| -> Vec<(String, String)> {
+            let cur =
+                progress.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+            if cur % PROGRESS_INTERVAL == 0 {
+                eprint!("{cur} complete\r");
+            }
+            let mut mol = ROMol::from_smiles(&smiles);
 
-        trace!("calling clean");
-        mol.openff_clean(); // avoids pre-condition violation on match
+            trace!("calling clean");
+            mol.openff_clean(); // avoids pre-condition violation on match
 
-        trace!("calling find_matches");
-        let matches = find_matches(&params, &mol);
+            trace!("calling find_matches");
+            let matches = find_matches(&params, &mol);
 
-        let mut res: Vec<(String, String)> = Vec::new();
-        for pid in matches.intersection(&want) {
-            res.push((pid.to_string(), smiles.clone()));
-        }
-        res
-    };
-    let results: Vec<_> =
-        receiver.into_iter().par_bridge().flat_map(map_op).collect();
+            let mut res: Vec<(String, String)> = Vec::new();
+            for pid in matches.intersection(&want) {
+                res.push((pid.to_string(), smiles.clone()));
+            }
+            res
+        };
 
-    th.join().unwrap().unwrap();
+        receiver.into_iter().par_bridge().flat_map(map_op).collect()
+    });
 
     let mut res: HashMap<String, Vec<String>> = HashMap::new();
     for (pid, mol) in results {
