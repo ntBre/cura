@@ -1,3 +1,4 @@
+use clustrs::{dbscan, Label};
 use openff_toolkit::ForceField;
 use rayon::iter::{
     IntoParallelIterator, IntoParallelRefIterator, ParallelIterator,
@@ -6,7 +7,6 @@ use rdkit_rs::{
     bitvector::BitVector, fingerprint::tanimoto, fragment::recap_decompose,
     ROMol,
 };
-use rsearch::cluster::{dbscan, Label};
 use std::{
     collections::{HashMap, HashSet},
     path::{Path, PathBuf},

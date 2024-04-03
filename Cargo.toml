@@ -10,9 +10,9 @@ log = "0.4.20"
 rayon = "1.8.0"
 rusqlite = { version = "0.31.0", features = ["bundled", "i128_blob"] }
 
+clustrs = { path = "../clustrs" }
 rdkit-rs = { path = "../rdkit-rs" }
 openff-toolkit = { path = "/home/brent/omsf/rust/coprelos/openff-toolkit" }
-rsearch = { path = "/home/brent/omsf/chembl" }
 
 [dev-dependencies]
 tempfile = "3.10.1"
