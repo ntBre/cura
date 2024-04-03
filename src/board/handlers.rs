@@ -21,8 +21,7 @@ use crate::{
         templates::{Body, DrawMol, Index, Param},
         AppState,
     },
-    find_matches_full,
-    parse::{load_mols, make_fps, Report},
+    find_matches_full, load_mols, make_fps, Report,
 };
 
 pub(crate) async fn index(
