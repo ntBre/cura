@@ -200,7 +200,7 @@ pub fn load_mols(
                 return None;
             }
             let matches = find_matches_full(mol_map, &mol);
-            if !matches.iter().any(|(_, p)| p.as_str() == pid) {
+            if !matches.values().any(|p| p.as_str() == pid) {
                 trace!(
                     "pid {pid} not found in {:?} for {}",
                     matches.into_values().collect::<HashSet<String>>(),
