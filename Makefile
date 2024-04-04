@@ -28,7 +28,7 @@ store:
 query_args := -s $(CHEMBL_BASE)/input/want.params
 
 query:
-	$(call run, query, $(query_args))
+	$(call run, query, $(query_args)) -x 'inchi:work/inchis.dat' -x 'natoms:100'
 
 parse:
 	$(call run, parse, output/t18b.smiles -t t18b)
