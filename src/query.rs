@@ -85,11 +85,12 @@ pub fn query(
     info!("loading moldata from database");
     const CHAN_SIZE: usize = 1024;
     let (sender, receiver) = mpsc::sync_channel(CHAN_SIZE);
+    let progress = AtomicUsize::new(0);
+    let skipped = AtomicUsize::new(0);
     let results: Vec<_> = thread::scope(|s| {
         s.spawn(|| table.send_molecules(sender));
 
         info!("processing data");
-        let progress = AtomicUsize::new(0);
         let map_op = |mol: Molecule| -> Vec<(Pid, usize)> {
             let cur =
                 progress.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
@@ -98,6 +99,7 @@ pub fn query(
             }
 
             if !filters.iter().all(|f| f.apply(&mol)) {
+                skipped.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
                 return Vec::new();
             }
 
@@ -117,6 +119,10 @@ pub fn query(
 
         receiver.into_iter().par_bridge().flat_map(map_op).collect()
     });
+    let progress = progress.into_inner();
+    let skipped = skipped.into_inner();
+
+    eprintln!("filtered {skipped}/{progress} records");
 
     let mut res: HashMap<Pid, Match> = HashMap::new();
     for (pid, mol_id) in results {
