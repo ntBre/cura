@@ -25,10 +25,11 @@ endef
 store:
 	$(call run, store, $(CHEMBL))
 
-query_args := -s $(CHEMBL_BASE)/input/want.params
+query_args := -s $(CHEMBL_BASE)/input/want.params -x 'inchi:work/inchis.dat' -x	\
+'natoms:100' --reset
 
 query:
-	$(call run, query, $(query_args)) -x 'inchi:work/inchis.dat' -x 'natoms:100'
+	$(call run, query, $(query_args))
 
 parse:
 	$(call run, parse, output/t18b.smiles -t t18b)
