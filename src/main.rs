@@ -15,6 +15,7 @@ use cura::{
     store::store,
     table::Table,
 };
+use log::info;
 
 #[derive(Parser)]
 struct Cli {
@@ -61,6 +62,11 @@ enum Commands {
         /// filename; and `natoms:n` to filter by maximum number of atoms n.
         #[arg(short = 'x', long)]
         filters: Vec<String>,
+
+        /// Reset (clear) the stored molecule matches in the database for this
+        /// force field before running the query.
+        #[arg(short, long, default_value_t = false)]
+        reset: bool,
     },
 
     /// Parse the output from `cura query`, then fragment, fingerprint, and
@@ -135,13 +141,20 @@ async fn main() {
             parameter_type,
             search_params,
             filters,
-        } => query(
-            &mut table,
-            forcefield,
-            parameter_type,
-            search_params,
-            &parse_filters(filters),
-        ),
+            reset,
+        } => {
+            if reset {
+                info!("deleting entry for {forcefield} from database");
+                table.reset_forcefield(&forcefield).unwrap();
+            }
+            query(
+                &mut table,
+                forcefield,
+                parameter_type,
+                search_params,
+                &parse_filters(filters),
+            )
+        }
         Commands::Parse {
             input,
             forcefield,

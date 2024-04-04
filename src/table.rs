@@ -206,4 +206,12 @@ impl Table {
 
         Ok(ret)
     }
+
+    /// Delete the entry in the forcefields table named `forcefield`.
+    pub fn reset_forcefield(&self, forcefield: &str) -> RResult<()> {
+        let conn = self.conn();
+        let mut stmt = conn.prepare(include_str!("delete_forcefield.sql"))?;
+        stmt.execute((forcefield,))?;
+        Ok(())
+    }
 }
