@@ -16,6 +16,7 @@ askama = "0.12.1"
 axum = "0.7.4"
 serde = { version = "1.0.196", features = ["derive"] }
 tokio = { version = "1.36.0", features = ["macros", "rt-multi-thread"] }
+tower-http = { version = "0.5.0", features = ["fs"] }
 toml = "0.8.10"
 
 # local packages
