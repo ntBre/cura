@@ -33,6 +33,7 @@ pub struct Molecule {
     /// None when inserting into the database but set when retrieving
     id: Option<usize>,
     smiles: String,
+    inchikey: String,
     natoms: usize,
     elements: i128,
 }
@@ -54,10 +55,16 @@ pub struct ForceField {
 }
 
 impl Molecule {
-    pub fn new(smiles: String, natoms: usize, elements: i128) -> Self {
+    pub fn new(
+        smiles: String,
+        inchikey: String,
+        natoms: usize,
+        elements: i128,
+    ) -> Self {
         Self {
             id: None,
             smiles,
+            inchikey,
             natoms,
             elements,
         }
@@ -376,6 +383,7 @@ mod tests {
             "openff-2.1.0.offxml".to_string(),
             "ProperTorsions".to_string(),
             "testfiles/want.params".to_string(),
+            &[],
         );
 
         let res = table.with_molecules(|mol| mol.natoms).unwrap();

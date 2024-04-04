@@ -43,7 +43,7 @@ impl Table {
         self.conn.lock().unwrap()
     }
 
-    /// Insert a sequence of SMILES, moldata pairs into the database in a single
+    /// Insert a sequence of [Molecule]s into the database in a single
     /// transaction.
     pub fn insert_molecules(&mut self, mols: Vec<Molecule>) -> RResult<()> {
         let mut conn = self.conn.lock().unwrap();
@@ -53,6 +53,7 @@ impl Table {
             Molecule {
                 id,
                 smiles,
+                inchikey,
                 natoms,
                 elements,
             },
@@ -64,7 +65,7 @@ impl Table {
             );
             tx.execute(
                 include_str!("insert_molecule.sql"),
-                (smiles, natoms, elements),
+                (smiles, inchikey, natoms, elements),
             )?;
             if i % PROGRESS_INTERVAL == 0 {
                 eprint!("{i} complete\r");
@@ -170,8 +171,9 @@ impl Table {
                 Ok(Molecule {
                     id: row.get(0)?,
                     smiles: row.get(1)?,
-                    natoms: row.get(2)?,
-                    elements: row.get(3)?,
+                    inchikey: row.get(2)?,
+                    natoms: row.get(3)?,
+                    elements: row.get(4)?,
                 })
             })?
             .flatten()
@@ -194,8 +196,9 @@ impl Table {
                 Ok(f(Molecule {
                     id: row.get(0)?,
                     smiles: row.get(1)?,
-                    natoms: row.get(2)?,
-                    elements: row.get(3)?,
+                    inchikey: row.get(2)?,
+                    natoms: row.get(3)?,
+                    elements: row.get(4)?,
                 }))
             })?
             .flatten()

@@ -9,7 +9,11 @@ use std::path::PathBuf;
 
 use clap::{Parser, Subcommand};
 use cura::{
-    board::board, parse::parse, query::query, store::store, table::Table,
+    board::board,
+    parse::parse,
+    query::{query, Filter},
+    store::store,
+    table::Table,
 };
 
 #[derive(Parser)]
@@ -51,6 +55,12 @@ enum Commands {
         /// provided forcefield.
         #[arg(short, long, default_value = "want.params")]
         search_params: String,
+
+        /// Filters to apply to the query. Currently supported values are
+        /// `inchi:filename` to filter by a sequence of inchi keys stored in
+        /// filename; and `natoms:n` to filter by maximum number of atoms n.
+        #[arg(short = 'x', long)]
+        filters: Vec<String>,
     },
 
     /// Parse the output from `cura query`, then fragment, fingerprint, and
@@ -80,6 +90,31 @@ enum Commands {
     Board,
 }
 
+/// Parse a sequence of filters like ["inchi:inchis.dat", "natoms:100", ...]
+/// into [Filter]s of the appropriate types
+fn parse_filters(filters: Vec<String>) -> Vec<Filter> {
+    filters
+        .into_iter()
+        .map(|s| {
+            let fields: Vec<&str> = s.trim().split(':').collect();
+            match &fields[..] {
+                [typ, arg] if *typ == "inchi" => Filter::Inchi(
+                    std::fs::read_to_string(*arg)
+                        .unwrap()
+                        .split_ascii_whitespace()
+                        .map(str::trim)
+                        .map(str::to_owned)
+                        .collect(),
+                ),
+                [typ, arg] if *typ == "natoms" => {
+                    Filter::Natoms(arg.parse().unwrap())
+                }
+                _ => panic!("unknown filter argument {s}"),
+            }
+        })
+        .collect()
+}
+
 #[tokio::main]
 async fn main() {
     env_logger::init();
@@ -99,7 +134,14 @@ async fn main() {
             forcefield,
             parameter_type,
             search_params,
-        } => query(&mut table, forcefield, parameter_type, search_params),
+            filters,
+        } => query(
+            &mut table,
+            forcefield,
+            parameter_type,
+            search_params,
+            &parse_filters(filters),
+        ),
         Commands::Parse {
             input,
             forcefield,

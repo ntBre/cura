@@ -44,11 +44,28 @@ pub fn write_output(dir: impl AsRef<Path>, res: HashMap<String, Vec<String>>) {
     }
 }
 
+pub enum Filter {
+    Inchi(HashSet<String>),
+    Natoms(usize),
+}
+
+impl Filter {
+    /// Returns true if `mol` satisfies the condition of the filter and should
+    /// be retained.
+    fn apply(&self, mol: &Molecule) -> bool {
+        match self {
+            Filter::Inchi(set) => set.contains(&mol.inchikey),
+            Filter::Natoms(n) => mol.natoms <= *n,
+        }
+    }
+}
+
 pub fn query(
     table: &mut Table,
     forcefield: String,
     parameter_type: String,
     search_params: String,
+    filters: &[Filter],
 ) {
     info!("loading force field and parameters");
 
@@ -79,6 +96,11 @@ pub fn query(
             if cur % PROGRESS_INTERVAL == 0 {
                 eprint!("{cur} complete\r");
             }
+
+            if !filters.iter().all(|f| f.apply(&mol)) {
+                return Vec::new();
+            }
+
             let mut romol = ROMol::from_smiles(&mol.smiles);
 
             trace!("calling clean");

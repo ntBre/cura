@@ -29,6 +29,7 @@ pub fn store(table: &mut Table, molecule_file: &str) {
                 mol.openff_clean();
                 Molecule::new(
                     mol.to_smiles(),
+                    mol.to_inchi_key(),
                     mol.num_atoms(),
                     get_elements(&mol),
                 )
