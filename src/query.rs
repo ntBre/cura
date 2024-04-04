@@ -54,7 +54,7 @@ impl Filter {
     /// be retained.
     fn apply(&self, mol: &Molecule) -> bool {
         match self {
-            Filter::Inchi(set) => set.contains(&mol.inchikey),
+            Filter::Inchi(set) => !set.contains(&mol.inchikey),
             Filter::Natoms(n) => mol.natoms <= *n,
         }
     }
