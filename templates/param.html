@@ -28,9 +28,11 @@
 		<p>SMILES: {{m.smiles}}</p>
 		<p>{{m.svg|safe}}</p>
 		{% endfor %}
-		<form action="/param/{{pid}}">
-		  <button name="max" value="{{total_mols}}">Load all</button>
-		</form>
+		{% if mols.len().lt(total_mols) %}
+			<form action="/param/{{pid}}">
+			<button name="max" value="{{total_mols}}">Load all</button>
+			</form>
+		{% endif %}
 	{% when Body::Report with (s) %}
 		{{s|safe}}
 {% endmatch %}
