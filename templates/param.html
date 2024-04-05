@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 
 {% block content %}
+<script type="text/javascript" src="/js/param.js"></script>
+
 <a href="/">Home</a>
 
 <h1>{{pid}}</h1>
@@ -10,7 +12,7 @@
 	{% when Body::SmilesList with {total_mols, mols} %}
 		<h2>Showing {{mols.len()}}/{{total_mols}} molecules</h2>
 		{% for (i, m) in mols.iter().enumerate() %}
-		{{m.svg|safe}}
+		<span smiles="{{m.smiles}}">{{m.svg|safe}}</span>
 		{% endfor %}
 		{% if mols.len().lt(total_mols) %}
 			<form action="/param/{{pid}}">
