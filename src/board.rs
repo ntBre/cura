@@ -4,14 +4,12 @@ use std::{
 };
 
 use axum::{routing::get, Router};
-use config::{Config, Parameter};
 use openff_toolkit::ForceField;
 use templates::Param;
 use tokio::net::TcpListener;
 
 use crate::table::Table;
 
-mod config;
 mod handlers;
 mod templates;
 
@@ -23,39 +21,24 @@ struct ParamState {
 }
 
 struct AppState {
-    cli: Config,
+    forcefield: String,
     pid_to_smarts: HashMap<String, String>,
     param_states: HashMap<String, ParamState>,
     table: Table,
 }
 
-impl AppState {
-    #[inline]
-    fn param_by_id(&self, id: &str) -> Option<&Parameter> {
-        self.cli.parameters.iter().find(|p| p.id == id)
-    }
-
-    #[inline]
-    fn param_by_id_mut(&mut self, id: &str) -> Option<&mut Parameter> {
-        self.cli.parameters.iter_mut().find(|p| p.id == id)
-    }
-}
-
-pub async fn board(table: Table) {
-    let cli = config::Config::load("testfiles/fingerprint.toml");
-
-    let pid_to_smarts: HashMap<String, String> =
-        ForceField::load(&cli.forcefield)
-            .unwrap()
-            .get_parameter_handler("ProperTorsions")
-            .unwrap()
-            .parameters()
-            .into_iter()
-            .map(|p| (p.id(), p.smirks()))
-            .collect();
+pub async fn board(table: Table, forcefield: String) {
+    let pid_to_smarts: HashMap<String, String> = ForceField::load(&forcefield)
+        .unwrap()
+        .get_parameter_handler("ProperTorsions")
+        .unwrap()
+        .parameters()
+        .into_iter()
+        .map(|p| (p.id(), p.smirks()))
+        .collect();
 
     let state = Arc::new(Mutex::new(AppState {
-        cli,
+        forcefield,
         param_states: HashMap::new(),
         pid_to_smarts,
         table,

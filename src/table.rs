@@ -135,6 +135,20 @@ impl Table {
         Ok(ret)
     }
 
+    pub fn get_forcefield(&self, ffname: &str) -> RResult<ForceField> {
+        let conn = self.conn();
+        let mut stmt = conn.prepare(include_str!("get_smiles_matching.sql"))?;
+        let res = stmt.query_row((ffname,), |row| {
+            Ok(ForceField {
+                id: row.get(0)?,
+                name: row.get(1)?,
+                matches: postcard::from_bytes(&row.get::<usize, Vec<u8>>(2)?)
+                    .unwrap(),
+            })
+        })?;
+        Ok(res)
+    }
+
     /// Return a flattened vector of SMILES from the database.
     pub fn get_smiles(&self) -> RResult<Vec<String>> {
         let conn = self.conn.lock().unwrap();
