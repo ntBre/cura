@@ -20,8 +20,8 @@ impl Table {
     /// Open a new database [Connection] and create a `molecules` table there.
     pub fn create(path: impl AsRef<Path>) -> RResult<Self> {
         let conn = Connection::open(path)?;
-        conn.execute(include_str!("create_molecules.sql"), ())?;
-        conn.execute(include_str!("create_forcefields.sql"), ())?;
+        conn.execute(include_str!("sql/create_molecules.sql"), ())?;
+        conn.execute(include_str!("sql/create_forcefields.sql"), ())?;
         Ok(Self {
             conn: Mutex::new(conn),
         })
@@ -34,7 +34,7 @@ impl Table {
         moldata: String,
     ) -> RResult<()> {
         let conn = self.conn.lock().unwrap();
-        let mut stmt = conn.prepare(include_str!("insert_molecule.sql"))?;
+        let mut stmt = conn.prepare(include_str!("sql/insert_molecule.sql"))?;
         stmt.execute((smiles, moldata))?;
         Ok(())
     }
@@ -64,7 +64,7 @@ impl Table {
                 "attempted to insert existing molecule back into database"
             );
             tx.execute(
-                include_str!("insert_molecule.sql"),
+                include_str!("sql/insert_molecule.sql"),
                 (smiles, inchikey, natoms, elements),
             )?;
             if i % PROGRESS_INTERVAL == 0 {
@@ -78,7 +78,8 @@ impl Table {
         let conn = self.conn();
         let name = &forcefield.name;
         let blob = postcard::to_stdvec(&forcefield.matches).unwrap();
-        let mut stmt = conn.prepare(include_str!("insert_forcefield.sql"))?;
+        let mut stmt =
+            conn.prepare(include_str!("sql/insert_forcefield.sql"))?;
         stmt.execute((name, blob))?;
         Ok(())
     }
@@ -91,7 +92,8 @@ impl Table {
         pid: &Pid,
     ) -> RResult<Vec<String>> {
         let conn = self.conn();
-        let mut stmt = conn.prepare(include_str!("get_smiles_matching.sql"))?;
+        let mut stmt =
+            conn.prepare(include_str!("sql/get_smiles_matching.sql"))?;
         let ids: Vec<usize> = stmt
             .query_map((ffname,), |row| {
                 Ok(ForceField {
@@ -137,7 +139,8 @@ impl Table {
 
     pub fn get_forcefield(&self, ffname: &str) -> RResult<ForceField> {
         let conn = self.conn();
-        let mut stmt = conn.prepare(include_str!("get_smiles_matching.sql"))?;
+        let mut stmt =
+            conn.prepare(include_str!("sql/get_smiles_matching.sql"))?;
         let res = stmt.query_row((ffname,), |row| {
             Ok(ForceField {
                 id: row.get(0)?,
@@ -152,7 +155,7 @@ impl Table {
     /// Return a flattened vector of SMILES from the database.
     pub fn get_smiles(&self) -> RResult<Vec<String>> {
         let conn = self.conn.lock().unwrap();
-        let mut stmt = conn.prepare(include_str!("get_smiles.sql"))?;
+        let mut stmt = conn.prepare(include_str!("sql/get_smiles.sql"))?;
         let ret = stmt
             .query_map([], |row| Ok(row.get(0).unwrap()))
             .unwrap()
@@ -164,7 +167,7 @@ impl Table {
 
     pub fn send_smiles(&self, sender: SyncSender<String>) -> RResult<()> {
         let conn = self.conn.lock().unwrap();
-        let mut stmt = conn.prepare(include_str!("get_smiles.sql"))?;
+        let mut stmt = conn.prepare(include_str!("sql/get_smiles.sql"))?;
         for s in stmt
             .query_map([], |row| Ok(row.get(0).unwrap()))
             .unwrap()
@@ -179,7 +182,7 @@ impl Table {
 
     pub fn send_molecules(&self, sender: SyncSender<Molecule>) -> RResult<()> {
         let conn = self.conn.lock().unwrap();
-        let mut stmt = conn.prepare(include_str!("get_molecules.sql"))?;
+        let mut stmt = conn.prepare(include_str!("sql/get_molecules.sql"))?;
         for s in stmt
             .query_map([], |row| {
                 Ok(Molecule {
@@ -204,7 +207,7 @@ impl Table {
         F: FnMut(Molecule) -> T,
     {
         let conn = self.conn.lock().unwrap();
-        let mut stmt = conn.prepare(include_str!("get_molecules.sql"))?;
+        let mut stmt = conn.prepare(include_str!("sql/get_molecules.sql"))?;
         let ret = stmt
             .query_map([], |row| {
                 Ok(f(Molecule {
@@ -224,7 +227,8 @@ impl Table {
     /// Delete the entry in the forcefields table named `forcefield`.
     pub fn reset_forcefield(&self, forcefield: &str) -> RResult<()> {
         let conn = self.conn();
-        let mut stmt = conn.prepare(include_str!("delete_forcefield.sql"))?;
+        let mut stmt =
+            conn.prepare(include_str!("sql/delete_forcefield.sql"))?;
         stmt.execute((forcefield,))?;
         Ok(())
     }
