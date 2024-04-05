@@ -12,13 +12,14 @@
 	{% when Body::SmilesList with {total_mols, mols} %}
 		<h2>Showing {{mols.len()}}/{{total_mols}} molecules</h2>
 		{% for (i, m) in mols.iter().enumerate() %}
-		<span smiles="{{m.smiles}}">{{m.svg|safe}}</span>
+		<span natoms="{{m.natoms}}" smiles="{{m.smiles}}">{{m.svg|safe}}</span>
 		{% endfor %}
 		{% if mols.len().lt(total_mols) %}
 			<form action="/param/{{pid}}">
 			<button name="max" value="{{total_mols}}">Load all</button>
 			</form>
 		{% endif %}
+		<dialog onclick="event.target==this && this.close()" id="modal-box"></dialog>
 	{% when Body::Report with (s) %}
 		{{s|safe}}
 {% endmatch %}
