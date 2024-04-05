@@ -34,7 +34,14 @@ pub(crate) async fn index(
         .into_iter()
         .map(|m| m.pid)
         .collect();
-    parameter_ids.sort(); // TODO use param sort
+    parameter_ids.sort_by_key(|pid| {
+        let mut chars = pid.chars();
+        let prefix = chars.next().unwrap();
+        let number: String =
+            chars.by_ref().take_while(|c| c.is_numeric()).collect();
+        let suffix: Vec<_> = chars.collect();
+        (prefix, number.parse::<usize>().unwrap(), suffix)
+    });
     Index {
         cluster_counts: parameter_ids
             .iter()
