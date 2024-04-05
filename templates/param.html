@@ -5,12 +5,11 @@
 
 <a href="/">Home</a>
 
-<h1>{{pid}}</h1>
-<p>SMIRKS: {{smarts}}</p>
+<h3>{{pid}} - {{smarts}}</h3>
 
 {% match body %}
 	{% when Body::SmilesList with {total_mols, mols} %}
-		<h2>Showing {{mols.len()}}/{{total_mols}} molecules</h2>
+		<p>Showing {{mols.len()}}/{{total_mols}} molecules</p>
 		{% for (i, m) in mols.iter().enumerate() %}
 		<span natoms="{{m.natoms}}" smiles="{{m.smiles}}">{{m.svg|safe}}</span>
 		{% endfor %}
