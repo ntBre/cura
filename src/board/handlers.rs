@@ -62,6 +62,7 @@ pub(crate) async fn index(
 
 /// returns the generated clustering report from [Report::write] as a String,
 /// along with the number of clusters
+#[allow(unused)]
 fn single(
     ff: &str,
     max_atoms: usize,
@@ -181,12 +182,10 @@ pub(crate) async fn param(
     };
     // invalidate the cached page if max is provided. TODO save max_draw so that
     // we dont invalidate if it doesn't change
-    let mut invalidate = false;
     const MAX_DRAW: usize = 50; /* the maximum number of mols to draw */
     let max_draw = if let Some(Ok(max_draw)) =
         params.get("max").map(|s| s.parse::<usize>())
     {
-        invalidate = true;
         max_draw
     } else {
         MAX_DRAW
@@ -226,7 +225,6 @@ pub(crate) async fn param(
         .collect();
     let tmpl = Param {
         smarts,
-        do_fragment: false,
         pid: pid.clone(),
         body: Body::SmilesList { mols, total_mols },
     };

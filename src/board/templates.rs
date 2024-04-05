@@ -20,6 +20,7 @@ pub enum Body {
         total_mols: usize,
         mols: Vec<DrawMol>,
     },
+    #[allow(unused)]
     Report(String),
 }
 
@@ -27,7 +28,6 @@ pub enum Body {
 #[template(path = "param.html")]
 pub(crate) struct Param {
     pub smarts: String,
-    pub do_fragment: bool,
     pub pid: String,
     pub body: Body,
 }
