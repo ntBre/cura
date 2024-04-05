@@ -10,10 +10,7 @@
 	{% when Body::SmilesList with {total_mols, mols} %}
 		<h2>Showing {{mols.len()}}/{{total_mols}} molecules</h2>
 		{% for (i, m) in mols.iter().enumerate() %}
-		<h3>Molecule {{i+1}}</h3>
-		<p>{{m.natoms}} atoms</p>
-		<p>SMILES: {{m.smiles}}</p>
-		<p>{{m.svg|safe}}</p>
+		{{m.svg|safe}}
 		{% endfor %}
 		{% if mols.len().lt(total_mols) %}
 			<form action="/param/{{pid}}">
