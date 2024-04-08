@@ -17,12 +17,10 @@ use rdkit_rs::{fingerprint::tanimoto, ROMol};
 use crate::{
     find_matches_full, load_forcefield, make_fps,
     serve::{
-        templates::{DrawMol, ErrorPage, Index, Param},
+        templates::{Cluster, DrawMol, ErrorPage, Index, Param},
         AppState,
     },
 };
-
-use super::templates::Cluster;
 
 pub(crate) async fn index(
     State(state): State<Arc<Mutex<AppState>>>,
