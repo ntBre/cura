@@ -1,6 +1,7 @@
 use std::{
     collections::{HashMap, HashSet},
     path::Path,
+    process::exit,
     sync::atomic::{AtomicUsize, Ordering},
 };
 
@@ -367,11 +368,12 @@ pub fn bits_to_elements(bits: i128) -> Vec<usize> {
 
 pub fn elements_to_bits(symbols: &[String]) -> i128 {
     let mut ret = 0;
-    for i in symbols
-        .into_iter()
-        .map(|s| PTABLE.iter().position(|sym| *sym == s.as_str()).unwrap())
-    {
-        ret |= 1 << i;
+    for s in symbols {
+        let Some(pos) = PTABLE.iter().position(|sym| *sym == s.as_str()) else {
+            eprintln!("unrecognized symbol {s}");
+            exit(1);
+        };
+        ret |= 1 << pos;
     }
     ret
 }
