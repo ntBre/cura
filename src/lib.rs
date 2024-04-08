@@ -76,11 +76,11 @@ impl Molecule {
 /// [ParameterHandler].
 fn load_forcefield(
     forcefield: &str,
-    parameter_type: String,
+    parameter_type: &str,
 ) -> Vec<(String, ROMol)> {
     OFF::load(forcefield)
         .unwrap()
-        .get_parameter_handler(&parameter_type)
+        .get_parameter_handler(parameter_type)
         .unwrap()
         .parameters()
         .into_iter()

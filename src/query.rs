@@ -81,7 +81,7 @@ pub fn query(
         .map(|p| (p.id(), p.smirks()))
         .collect();
 
-    let params = load_forcefield(&forcefield, parameter_type);
+    let params = load_forcefield(&forcefield, &parameter_type);
 
     let want = load_want(&search_params);
     info!("loading moldata from database");

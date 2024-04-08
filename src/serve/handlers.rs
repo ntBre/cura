@@ -15,7 +15,7 @@ use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use rdkit_rs::{fingerprint::tanimoto, ROMol};
 
 use crate::{
-    find_matches_full, make_fps,
+    find_matches_full, load_forcefield, make_fps,
     serve::{
         templates::{Body, DrawMol, ErrorPage, Index, Param},
         AppState,
@@ -84,7 +84,7 @@ fn single(
         .collect();
 
     // pid to mol
-    let mol_map = get_mol_map(ff, "ProperTorsions"); // TODO
+    let mol_map = load_forcefield(ff, "ProperTorsions"); // TODO
 
     debug!("loading molecules");
 
@@ -146,17 +146,6 @@ fn single(
     Ok((output, max + 1))
 }
 
-fn get_mol_map(ff: &str, param_type: &str) -> Vec<(String, ROMol)> {
-    ForceField::load(ff)
-        .unwrap()
-        .get_parameter_handler(param_type)
-        .unwrap()
-        .parameters()
-        .into_iter()
-        .map(|p| (p.id(), ROMol::from_smarts(&p.smirks())))
-        .collect()
-}
-
 /// Get the list of SMILES matching `pid` in `ffname`. Uses the cached value in
 /// `state` if available, or computes and caches the result if not.
 fn get_smiles_list(
@@ -187,31 +176,25 @@ pub(crate) async fn param(
     let Some(smarts) = state.pid_to_smarts.get(&pid).cloned() else {
         return ErrorPage { pid }.render().unwrap().into();
     };
-    let smiles_list = get_smiles_list(&mut state, &pid, ffname);
-    // invalidate the cached page if max is provided. TODO save max_draw so that
-    // we dont invalidate if it doesn't change
+
     const MAX_DRAW: usize = 50; /* the maximum number of mols to draw */
-    let max_draw = if let Some(Ok(max_draw)) =
-        params.get("max").map(|s| s.parse::<usize>())
-    {
-        max_draw
-    } else {
-        MAX_DRAW
+    let max_draw = match params.get("max").map(|s| s.parse()) {
+        Some(Ok(n)) => n,
+        _ => MAX_DRAW,
     };
-    // this means Cluster button was pressed, so we overwrite whatever was there
-    // before
-    let mol_map = get_mol_map(&state.forcefield, "ProperTorsions");
-    let mut mols: Vec<_> = smiles_list
+
+    let mut mols: Vec<_> = get_smiles_list(&mut state, &pid, ffname)
         .into_par_iter()
         .map(|s| {
             let mut mol = ROMol::from_smiles(&s);
-            // I don't really want to do this because it's expensive
             mol.openff_clean();
             let natoms = mol.num_atoms();
             (mol, s, natoms)
         })
         .collect();
     mols.sort_by_key(|(_mol, _smiles, natoms)| *natoms);
+
+    let mol_map = load_forcefield(&state.forcefield, "ProperTorsions");
     let total_mols = mols.len();
     let mols = mols
         .into_iter()
