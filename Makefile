@@ -34,8 +34,8 @@ query:
 parse:
 	$(call run, parse, output/t18b.smiles -t t18b)
 
-board:
-	$(call run, board)
+serve:
+	$(call run, serve)
 
 memprof.query:
 	$(call memprof, query, $(query_args))

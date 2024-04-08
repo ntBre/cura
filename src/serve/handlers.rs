@@ -15,11 +15,12 @@ use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use rdkit_rs::{fingerprint::tanimoto, ROMol};
 
 use crate::{
-    board::{
+    find_matches_full, make_fps,
+    serve::{
         templates::{Body, DrawMol, ErrorPage, Index, Param},
         AppState,
     },
-    find_matches_full, make_fps, Report,
+    Report,
 };
 
 pub(crate) async fn index(

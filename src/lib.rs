@@ -16,9 +16,9 @@ use rdkit_rs::{
 
 pub const PROGRESS_INTERVAL: usize = 1000;
 
-pub mod board;
 pub mod parse;
 pub mod query;
+pub mod serve;
 pub mod store;
 pub mod table;
 

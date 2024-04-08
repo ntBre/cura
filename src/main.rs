@@ -7,8 +7,8 @@
 
 use clap::{Parser, Subcommand};
 use cura::{
-    board::board,
     query::{query, Filter},
+    serve::serve,
     store::store,
     table::Table,
 };
@@ -64,7 +64,7 @@ enum Commands {
         reset: bool,
     },
 
-    Board {
+    Serve {
         /// The OpenFF force field to load from the toolkit.
         #[arg(short, long, default_value = "openff-2.1.0.offxml")]
         forcefield: String,
@@ -130,6 +130,6 @@ async fn main() {
                 &parse_filters(filters),
             )
         }
-        Commands::Board { forcefield } => board(table, forcefield).await,
+        Commands::Serve { forcefield } => serve(table, forcefield).await,
     }
 }

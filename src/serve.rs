@@ -27,7 +27,7 @@ struct AppState {
     table: Table,
 }
 
-pub async fn board(table: Table, forcefield: String) {
+pub async fn serve(table: Table, forcefield: String) {
     let pid_to_smarts: HashMap<String, String> = ForceField::load(&forcefield)
         .unwrap()
         .get_parameter_handler("ProperTorsions")
