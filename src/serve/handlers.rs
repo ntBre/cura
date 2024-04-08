@@ -65,13 +65,12 @@ pub(crate) async fn index(
 
 /// returns the generated clustering report from [Report::write] as a String,
 /// along with the number of clusters
-fn make_cluster_report<'a>(
+fn make_cluster_report(
     ff: &str,
     mols: Vec<ROMol>,
-    pid: &'a str,
     eps: f64,
     min_pts: usize,
-) -> Result<Report<'a>, std::io::Error> {
+) -> Result<Report, std::io::Error> {
     // TODO pass these in
     const MORGAN_RADIUS: u32 = 4;
 
@@ -131,7 +130,6 @@ fn make_cluster_report<'a>(
         noise,
         clusters,
         mols,
-        parameter: pid,
         map,
         mol_map,
     })
@@ -200,17 +198,14 @@ pub(crate) async fn cluster(
         noise,
         mut clusters,
         mols,
-        parameter,
         map,
         mol_map,
-    } = make_cluster_report(&ffname, mols, &pid, eps, min_pts).unwrap();
+    } = make_cluster_report(&ffname, mols, eps, min_pts).unwrap();
 
     clusters.sort_by_key(|c| mols[c[0]].num_atoms());
 
-    assert_eq!(parameter, pid);
-
     Cluster {
-        pid: pid.clone(),
+        pid,
         smarts,
         eps,
         min_pts,
@@ -219,7 +214,6 @@ pub(crate) async fn cluster(
         noise,
         clusters,
         mols,
-        parameter,
         map,
         mol_map,
     }

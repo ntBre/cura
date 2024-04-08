@@ -1,6 +1,5 @@
 use std::{
     collections::{HashMap, HashSet},
-    path::Path,
     process::exit,
     sync::atomic::{AtomicUsize, Ordering},
 };
@@ -17,7 +16,6 @@ use rdkit_rs::{
 
 pub const PROGRESS_INTERVAL: usize = 1000;
 
-pub mod parse;
 pub mod query;
 pub mod serve;
 pub mod store;
@@ -89,81 +87,14 @@ fn load_forcefield(
         .collect()
 }
 
-pub struct Report<'a> {
+pub struct Report {
     pub max: usize,
     pub nfps: usize,
     pub noise: usize,
     pub clusters: Vec<Vec<usize>>,
     pub mols: Vec<ROMol>,
-    pub parameter: &'a str,
     pub map: HashMap<String, String>,
     pub mol_map: Vec<(String, ROMol)>,
-}
-
-impl Report<'_> {
-    pub fn generate(&self, path: impl AsRef<Path>) -> std::io::Result<()> {
-        use std::io::Write;
-        let mut out = std::fs::File::create(path)?;
-        let mut s = String::new();
-        self.write(&mut s).unwrap();
-        out.write_all(s.as_bytes())?;
-        Ok(())
-    }
-
-    pub fn write(
-        &self,
-        mut out: impl std::fmt::Write,
-    ) -> Result<(), std::fmt::Error> {
-        writeln!(out, "<html>")?;
-        writeln!(
-            out,
-            "{nfps} molecules, {max} clusters, {noise} noise points, \
-        pruned {} empty clusters",
-            self.max + 1 - self.clusters.len(),
-            nfps = self.nfps,
-            max = self.max + 1,
-            noise = self.noise
-        )?;
-        let mut clusters = self.clusters.clone();
-        clusters.sort_by_key(|c| self.mols[c[0]].num_atoms());
-        for (i, c) in clusters.iter().enumerate() {
-            writeln!(out, "<h1>Cluster {}, {} molecules</h1>", i + 1, c.len())?;
-            self.add_svg(&mut out, "Central Molecule", c[0])?;
-        }
-        writeln!(out, "</html>")?;
-        Ok(())
-    }
-
-    pub fn add_svg(
-        &self,
-        out: &mut impl std::fmt::Write,
-        msg: &str,
-        idx: usize,
-    ) -> Result<(), std::fmt::Error> {
-        let mol = &self.mols[idx];
-        let smile = mol.to_smiles();
-        let svg = self.make_svg(mol);
-        writeln!(out, "<p>{msg}</p>")?;
-        writeln!(out, "<p>{} atoms</p>", mol.num_atoms())?;
-        writeln!(out, "<p>SMILES: {smile}</p>")?;
-        writeln!(out, "{svg}")?;
-        Ok(())
-    }
-
-    pub fn make_svg(&self, mol: &ROMol) -> String {
-        let mut hl_atoms = Vec::new();
-        let pid = self.parameter;
-        if self.map.contains_key(pid) {
-            let tmp = find_matches_full(&self.mol_map, mol);
-            let got = tmp.iter().find(|(_atoms, param_id)| param_id == &pid);
-            if let Some((atoms, _pid)) = got {
-                hl_atoms.clone_from(atoms);
-            } else {
-                panic!("smirks doesn't match any more");
-            }
-        }
-        mol.draw_svg(400, 300, "", &hl_atoms)
-    }
 }
 
 /// Compute Morgan fingerprints of size `radius` for each of the molecules in
