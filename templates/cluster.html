@@ -29,7 +29,7 @@ clusters.len()}} empty clusters
 <p>Central Molecule</p>
 {% let idx = c[0].clone() %}
 {% let mol = mols.index(idx.clone()) %}
-<p>{{mol.num_atoms()}}</p>
+<p>{{mol.num_atoms()}} atoms</p>
 <p>SMILES: {{mol.to_smiles()}}</p>
 {{self.make_svg(mol)|safe}}
 {% endfor %}
