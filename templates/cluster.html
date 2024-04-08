@@ -20,7 +20,18 @@
 </form>
 
 <p>
-{{body|safe}}
+{{nfps}} molecules, {{max}} clusters, {{noise}} noise points, pruned {{max + 1 -
+clusters.len()}} empty clusters
 </p>
+
+{% for (i, c) in clusters.iter().enumerate() %}
+<h1>Cluster {{i + 1}}, {{c.len()}} molecules</h1>
+<p>Central Molecule</p>
+{% let idx = c[0].clone() %}
+{% let mol = mols.index(idx.clone()) %}
+<p>{{mol.num_atoms()}}</p>
+<p>SMILES: {{mol.to_smiles()}}</p>
+{{self.make_svg(mol)|safe}}
+{% endfor %}
 
 {% endblock %}

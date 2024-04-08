@@ -65,13 +65,13 @@ pub(crate) async fn index(
 
 /// returns the generated clustering report from [Report::write] as a String,
 /// along with the number of clusters
-fn make_cluster_report(
+fn make_cluster_report<'a>(
     ff: &str,
     mols: Vec<ROMol>,
-    pid: &str,
+    pid: &'a str,
     eps: f64,
     min_pts: usize,
-) -> Result<(String, usize), std::io::Error> {
+) -> Result<Report<'a>, std::io::Error> {
     // TODO pass these in
     const MORGAN_RADIUS: u32 = 4;
 
@@ -125,8 +125,7 @@ fn make_cluster_report(
         }
     }
 
-    let mut output = String::new();
-    Report {
+    Ok(Report {
         max,
         nfps,
         noise,
@@ -135,10 +134,7 @@ fn make_cluster_report(
         parameter: pid,
         map,
         mol_map,
-    }
-    .write(&mut output)
-    .unwrap();
-    Ok((output, max + 1))
+    })
 }
 
 /// Get the list of SMILES matching `pid` in `ffname`. Uses the cached value in
@@ -198,15 +194,34 @@ pub(crate) async fn cluster(
     let eps = get_param(&params, "eps", DBSCAN_EPS);
     let min_pts = get_param(&params, "min_pts", DBSCAN_MIN_PTS);
 
-    let (body, _) =
-        make_cluster_report(&ffname, mols, &pid, eps, min_pts).unwrap();
+    let Report {
+        max,
+        nfps,
+        noise,
+        mut clusters,
+        mols,
+        parameter,
+        map,
+        mol_map,
+    } = make_cluster_report(&ffname, mols, &pid, eps, min_pts).unwrap();
+
+    clusters.sort_by_key(|c| mols[c[0]].num_atoms());
+
+    assert_eq!(parameter, pid);
 
     Cluster {
-        pid,
+        pid: pid.clone(),
         smarts,
-        body,
         eps,
         min_pts,
+        max,
+        nfps,
+        noise,
+        clusters,
+        mols,
+        parameter,
+        map,
+        mol_map,
     }
     .render()
     .unwrap()

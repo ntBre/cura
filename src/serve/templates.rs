@@ -1,4 +1,8 @@
+use std::collections::HashMap;
+use std::ops::Index as _;
+
 use askama::Template;
+use rdkit_rs::ROMol;
 
 #[derive(Template)]
 #[template(path = "index.html")]
@@ -25,12 +29,36 @@ pub(crate) struct Param {
 
 #[derive(Clone, Template)]
 #[template(path = "cluster.html")]
-pub(crate) struct Cluster {
+pub(crate) struct Cluster<'a> {
     pub smarts: String,
     pub pid: String,
     pub eps: f64,
     pub min_pts: usize,
-    pub body: String,
+    pub max: usize,
+    pub nfps: usize,
+    pub noise: usize,
+    pub clusters: Vec<Vec<usize>>,
+    pub mols: Vec<ROMol>,
+    pub parameter: &'a str,
+    pub map: HashMap<String, String>,
+    pub mol_map: Vec<(String, ROMol)>,
+}
+
+impl<'a> Cluster<'a> {
+    pub fn make_svg(&self, mol: &ROMol) -> String {
+        let mut hl_atoms = Vec::new();
+        let pid = self.parameter;
+        if self.map.contains_key(pid) {
+            let tmp = crate::find_matches_full(&self.mol_map, mol);
+            let got = tmp.iter().find(|(_atoms, param_id)| param_id == &pid);
+            if let Some((atoms, _pid)) = got {
+                hl_atoms.clone_from(atoms);
+            } else {
+                panic!("smirks doesn't match any more");
+            }
+        }
+        mol.draw_svg(400, 300, "", &hl_atoms)
+    }
 }
 
 #[derive(Template)]
