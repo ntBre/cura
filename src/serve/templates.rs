@@ -23,6 +23,14 @@ pub(crate) struct Param {
     pub mols: Vec<DrawMol>,
 }
 
+#[derive(Clone, Template)]
+#[template(path = "cluster.html")]
+pub(crate) struct Cluster {
+    pub smarts: String,
+    pub pid: String,
+    pub body: String,
+}
+
 #[derive(Template)]
 #[template(path = "error.html")]
 pub(crate) struct ErrorPage {

@@ -47,9 +47,11 @@ pub async fn serve(table: Table, forcefield: String) {
     let app = Router::new()
         .route("/", get(handlers::index))
         .route("/param/:pid", get(handlers::param))
+        .route("/cluster/:pid", get(handlers::cluster))
         .nest_service("/css", tower_http::services::ServeDir::new("css"))
         .nest_service("/js", tower_http::services::ServeDir::new("js"))
         .with_state(state);
+
     let addr = "0.0.0.0:3000";
     let listener = TcpListener::bind(addr).await.unwrap();
     eprintln!("serving on {addr}");

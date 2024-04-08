@@ -23,6 +23,8 @@ use crate::{
     Report,
 };
 
+use super::templates::Cluster;
+
 pub(crate) async fn index(
     State(state): State<Arc<Mutex<AppState>>>,
 ) -> Html<String> {
@@ -63,14 +65,16 @@ pub(crate) async fn index(
 
 /// returns the generated clustering report from [Report::write] as a String,
 /// along with the number of clusters
-#[allow(unused)]
-fn single(
+fn make_cluster_report(
     ff: &str,
-    max_atoms: usize,
-    radius: u32,
     mols: Vec<ROMol>,
     pid: &str,
 ) -> Result<(String, usize), std::io::Error> {
+    // TODO pass these in
+    const MORGAN_RADIUS: u32 = 4;
+    const DBSCAN_EPS: f64 = 0.5;
+    const DBSCAN_MIN_PTS: usize = 1;
+
     debug!("building map");
 
     // pid to smirks
@@ -88,7 +92,7 @@ fn single(
 
     debug!("loading molecules");
 
-    let fps: Vec<_> = make_fps(&mols, radius);
+    let fps: Vec<_> = make_fps(&mols, MORGAN_RADIUS);
     let nfps = fps.len();
     let distance_fn = |i, j| {
         if i == j {
@@ -98,27 +102,19 @@ fn single(
         }
     };
 
-    // TODO pass these in
-    const DBSCAN_EPS: f64 = 0.5;
-    const DBSCAN_MIN_PTS: usize = 1;
-
     let labels = dbscan(nfps, nfps, distance_fn, DBSCAN_EPS, DBSCAN_MIN_PTS);
 
-    let max = match labels
+    let max = *labels
         .iter()
         .filter_map(|l| match l {
             Label::Cluster(n) => Some(n),
             _ => None,
         })
         .max()
-    {
-        Some(n) => *n,
-        None => {
-            dbg!(labels);
-            eprintln!("error: all noise points, exiting");
+        .unwrap_or_else(|| {
+            eprintln!("error: all noise points, exiting:\n{labels:?}");
             std::process::exit(1);
-        }
-    };
+        });
 
     let mut clusters: Vec<Vec<usize>> = vec![vec![]; max + 1];
     let mut noise = 0;
@@ -151,11 +147,11 @@ fn single(
 fn get_smiles_list(
     state: &mut std::sync::MutexGuard<'_, AppState>,
     pid: &String,
-    ffname: String,
+    ffname: &str,
 ) -> Vec<String> {
     let ps = state.param_states.get(pid);
     if ps.is_none() {
-        let collect = state.table.get_smiles_matching(&ffname, pid).unwrap();
+        let collect = state.table.get_smiles_matching(ffname, pid).unwrap();
         state
             .param_states
             .entry(pid.clone())
@@ -164,6 +160,38 @@ fn get_smiles_list(
     }
     let ps = state.param_states.get_mut(pid).unwrap();
     ps.smiles_list.clone().unwrap()
+}
+
+pub(crate) async fn cluster(
+    State(state): State<Arc<Mutex<AppState>>>,
+    Path(pid): Path<String>,
+    Query(params): Query<HashMap<String, String>>,
+) -> Html<String> {
+    let mut state = state.lock().unwrap();
+    let ffname = state.forcefield.clone();
+    let Some(smarts) = state.pid_to_smarts.get(&pid).cloned() else {
+        return ErrorPage { pid }.render().unwrap().into();
+    };
+
+    let mols: Vec<_> = get_smiles_list(&mut state, &pid, &ffname)
+        .into_par_iter()
+        .map(|s| {
+            let mut mol = ROMol::from_smiles(&s);
+            mol.openff_clean();
+            mol
+        })
+        .collect();
+
+    let (report, _) = make_cluster_report(&ffname, mols, &pid).unwrap();
+
+    Cluster {
+        pid,
+        smarts,
+        body: report,
+    }
+    .render()
+    .unwrap()
+    .into()
 }
 
 pub(crate) async fn param(
@@ -183,7 +211,7 @@ pub(crate) async fn param(
         _ => MAX_DRAW,
     };
 
-    let mut mols: Vec<_> = get_smiles_list(&mut state, &pid, ffname)
+    let mut mols: Vec<_> = get_smiles_list(&mut state, &pid, &ffname)
         .into_par_iter()
         .map(|s| {
             let mut mol = ROMol::from_smiles(&s);
