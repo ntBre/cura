@@ -17,7 +17,7 @@ use rdkit_rs::{fingerprint::tanimoto, ROMol};
 use crate::{
     find_matches_full, load_forcefield, make_fps,
     serve::{
-        templates::{Body, DrawMol, ErrorPage, Index, Param},
+        templates::{DrawMol, ErrorPage, Index, Param},
         AppState,
     },
     Report,
@@ -217,7 +217,8 @@ pub(crate) async fn param(
     let tmpl = Param {
         smarts,
         pid: pid.clone(),
-        body: Body::SmilesList { mols, total_mols },
+        mols,
+        total_mols,
     };
     let slot = state.param_states.get_mut(&pid).unwrap();
     slot.param_page = Some(tmpl.clone());

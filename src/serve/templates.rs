@@ -14,22 +14,13 @@ pub struct DrawMol {
     pub svg: String,
 }
 
-#[derive(Clone)]
-pub enum Body {
-    SmilesList {
-        total_mols: usize,
-        mols: Vec<DrawMol>,
-    },
-    #[allow(unused)]
-    Report(String),
-}
-
 #[derive(Clone, Template)]
 #[template(path = "param.html")]
 pub(crate) struct Param {
     pub smarts: String,
     pub pid: String,
-    pub body: Body,
+    pub total_mols: usize,
+    pub mols: Vec<DrawMol>,
 }
 
 #[derive(Template)]
