@@ -7,12 +7,13 @@
 
 use clap::{Parser, Subcommand};
 use cura::{
+    elements_to_bits,
     query::{query, Filter},
     serve::serve,
     store::store,
     table::Table,
 };
-use log::info;
+use log::{debug, info};
 
 #[derive(Parser)]
 struct Cli {
@@ -93,6 +94,12 @@ fn parse_filters(filters: Vec<String>) -> Vec<Filter> {
                 ),
                 [typ, arg] if *typ == "natoms" => {
                     Filter::Natoms(arg.parse().unwrap())
+                }
+                [typ, arg] if *typ == "elements" => {
+                    let elements: Vec<_> =
+                        arg.split(',').map(|s| s.trim().to_owned()).collect();
+                    debug!("requesting elements: {elements:?}");
+                    Filter::Elements(elements_to_bits(&elements))
                 }
                 _ => panic!("unknown filter argument {s}"),
             }

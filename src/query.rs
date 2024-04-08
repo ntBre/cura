@@ -45,6 +45,7 @@ pub fn write_output(dir: impl AsRef<Path>, res: HashMap<String, Vec<String>>) {
 }
 
 pub enum Filter {
+    Elements(i128),
     Inchi(HashSet<String>),
     Natoms(usize),
 }
@@ -56,6 +57,7 @@ impl Filter {
         match self {
             Filter::Inchi(set) => !set.contains(&mol.inchikey),
             Filter::Natoms(n) => mol.natoms <= *n,
+            Filter::Elements(mask) => (mol.elements | mask) == *mask,
         }
     }
 }

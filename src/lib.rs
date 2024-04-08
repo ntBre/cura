@@ -365,6 +365,17 @@ pub fn bits_to_elements(bits: i128) -> Vec<usize> {
     ret
 }
 
+pub fn elements_to_bits(symbols: &[String]) -> i128 {
+    let mut ret = 0;
+    for i in symbols
+        .into_iter()
+        .map(|s| PTABLE.iter().position(|sym| *sym == s.as_str()).unwrap())
+    {
+        ret |= 1 << i;
+    }
+    ret
+}
+
 pub fn atomic_num_to_symbol(v: Vec<usize>) -> Vec<&'static str> {
     v.into_iter().map(|n| PTABLE[n]).collect()
 }
