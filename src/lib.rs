@@ -90,7 +90,6 @@ fn load_forcefield(
 }
 
 pub struct Report<'a> {
-    pub args: Vec<String>,
     pub max: usize,
     pub nfps: usize,
     pub noise: usize,
@@ -116,7 +115,6 @@ impl Report<'_> {
         mut out: impl std::fmt::Write,
     ) -> Result<(), std::fmt::Error> {
         writeln!(out, "<html>")?;
-        writeln!(out, "<pre>args: {:?}</pre>", self.args)?;
         writeln!(
             out,
             "{nfps} molecules, {max} clusters, {noise} noise points, \
@@ -126,10 +124,6 @@ impl Report<'_> {
             max = self.max + 1,
             noise = self.noise
         )?;
-        let pid = self.parameter;
-        if let Some(smirks) = self.map.get(pid) {
-            writeln!(out, "<p>PID: {pid}, SMIRKS: {smirks}</p>")?;
-        }
         let mut clusters = self.clusters.clone();
         clusters.sort_by_key(|c| self.mols[c[0]].num_atoms());
         for (i, c) in clusters.iter().enumerate() {
@@ -148,7 +142,6 @@ impl Report<'_> {
     ) -> Result<(), std::fmt::Error> {
         let mol = &self.mols[idx];
         let smile = mol.to_smiles();
-        println!("{smile}");
         let svg = self.make_svg(mol);
         writeln!(out, "<p>{msg}</p>")?;
         writeln!(out, "<p>{} atoms</p>", mol.num_atoms())?;

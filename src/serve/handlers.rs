@@ -69,11 +69,11 @@ fn make_cluster_report(
     ff: &str,
     mols: Vec<ROMol>,
     pid: &str,
+    eps: f64,
+    min_pts: usize,
 ) -> Result<(String, usize), std::io::Error> {
     // TODO pass these in
     const MORGAN_RADIUS: u32 = 4;
-    const DBSCAN_EPS: f64 = 0.5;
-    const DBSCAN_MIN_PTS: usize = 1;
 
     debug!("building map");
 
@@ -102,7 +102,7 @@ fn make_cluster_report(
         }
     };
 
-    let labels = dbscan(nfps, nfps, distance_fn, DBSCAN_EPS, DBSCAN_MIN_PTS);
+    let labels = dbscan(nfps, nfps, distance_fn, eps, min_pts);
 
     let max = *labels
         .iter()
@@ -127,7 +127,6 @@ fn make_cluster_report(
 
     let mut output = String::new();
     Report {
-        args: std::env::args().collect::<Vec<_>>(),
         max,
         nfps,
         noise,
@@ -162,6 +161,17 @@ fn get_smiles_list(
     ps.smiles_list.clone().unwrap()
 }
 
+fn get_param<T: std::str::FromStr>(
+    params: &HashMap<String, String>,
+    key: &str,
+    def: T,
+) -> T {
+    match params.get(key).map(|s| s.parse()) {
+        Some(Ok(t)) => t,
+        _ => def,
+    }
+}
+
 pub(crate) async fn cluster(
     State(state): State<Arc<Mutex<AppState>>>,
     Path(pid): Path<String>,
@@ -182,12 +192,21 @@ pub(crate) async fn cluster(
         })
         .collect();
 
-    let (report, _) = make_cluster_report(&ffname, mols, &pid).unwrap();
+    const DBSCAN_EPS: f64 = 0.5;
+    const DBSCAN_MIN_PTS: usize = 1;
+
+    let eps = get_param(&params, "eps", DBSCAN_EPS);
+    let min_pts = get_param(&params, "min_pts", DBSCAN_MIN_PTS);
+
+    let (body, _) =
+        make_cluster_report(&ffname, mols, &pid, eps, min_pts).unwrap();
 
     Cluster {
         pid,
         smarts,
-        body: report,
+        body,
+        eps,
+        min_pts,
     }
     .render()
     .unwrap()

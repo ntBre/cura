@@ -88,7 +88,6 @@ pub fn parse(
 
     let output = input.with_extension("html");
     Report {
-        args: std::env::args().collect::<Vec<_>>(),
         max,
         nfps,
         noise,

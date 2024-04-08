@@ -28,6 +28,8 @@ pub(crate) struct Param {
 pub(crate) struct Cluster {
     pub smarts: String,
     pub pid: String,
+    pub eps: f64,
+    pub min_pts: usize,
     pub body: String,
 }
 
