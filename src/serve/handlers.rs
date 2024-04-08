@@ -157,6 +157,26 @@ fn get_mol_map(ff: &str, param_type: &str) -> Vec<(String, ROMol)> {
         .collect()
 }
 
+/// Get the list of SMILES matching `pid` in `ffname`. Uses the cached value in
+/// `state` if available, or computes and caches the result if not.
+fn get_smiles_list(
+    state: &mut std::sync::MutexGuard<'_, AppState>,
+    pid: &String,
+    ffname: String,
+) -> Vec<String> {
+    let ps = state.param_states.get(pid);
+    if ps.is_none() {
+        let collect = state.table.get_smiles_matching(&ffname, pid).unwrap();
+        state
+            .param_states
+            .entry(pid.clone())
+            .or_default()
+            .smiles_list = Some(collect);
+    }
+    let ps = state.param_states.get_mut(pid).unwrap();
+    ps.smiles_list.clone().unwrap()
+}
+
 pub(crate) async fn param(
     State(state): State<Arc<Mutex<AppState>>>,
     Path(pid): Path<String>,
@@ -167,20 +187,7 @@ pub(crate) async fn param(
     let Some(smarts) = state.pid_to_smarts.get(&pid).cloned() else {
         return ErrorPage { pid }.render().unwrap().into();
     };
-    let smiles_list = {
-        let ps = state.param_states.get(&pid);
-        if ps.is_none() {
-            let collect =
-                state.table.get_smiles_matching(&ffname, &pid).unwrap();
-            state
-                .param_states
-                .entry(pid.clone())
-                .or_default()
-                .smiles_list = Some(collect);
-        }
-        let ps = state.param_states.get_mut(&pid).unwrap();
-        ps.smiles_list.clone().unwrap()
-    };
+    let smiles_list = get_smiles_list(&mut state, &pid, ffname);
     // invalidate the cached page if max is provided. TODO save max_draw so that
     // we dont invalidate if it doesn't change
     const MAX_DRAW: usize = 50; /* the maximum number of mols to draw */
