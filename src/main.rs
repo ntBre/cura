@@ -5,12 +5,9 @@
 //! JSON representation of the ROMol. later on, I can decorate these entries
 //! with their Morgan fingerprints or other useful information
 
-use std::path::PathBuf;
-
 use clap::{Parser, Subcommand};
 use cura::{
     board::board,
-    parse::parse,
     query::{query, Filter},
     store::store,
     table::Table,
@@ -65,30 +62,6 @@ enum Commands {
         /// force field before running the query.
         #[arg(short, long, default_value_t = false)]
         reset: bool,
-    },
-
-    /// Parse the output from `cura query`, then fragment, fingerprint, and
-    /// cluster the results. Writes the output to `input` with the extension
-    /// `html`
-    Parse {
-        /// The OpenFF force field to load from the toolkit.
-        #[arg(short, long, default_value = "openff-2.1.0.offxml")]
-        forcefield: String,
-
-        /// The `Parameter` type for which to extract parameters. Allowed
-        /// options are valid arguments to `ForceField.get_parameter_handler`,
-        /// such as Bonds, Angles, or ProperTorsions.
-        #[arg(short, long, default_value = "ProperTorsions")]
-        parameter_type: String,
-
-        /// The target parameter. Must correspond to a parameter of type
-        /// `parameter_type` in `forcefield`.
-        #[arg(short, long)]
-        target: String,
-
-        /// The input SMILES file to read. TODO handle a directory recursively
-        /// or at least multiple files
-        input: PathBuf,
     },
 
     Board {
@@ -157,12 +130,6 @@ async fn main() {
                 &parse_filters(filters),
             )
         }
-        Commands::Parse {
-            input,
-            forcefield,
-            parameter_type,
-            target,
-        } => parse(&mut table, input, forcefield, parameter_type, target),
         Commands::Board { forcefield } => board(table, forcefield).await,
     }
 }
