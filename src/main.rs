@@ -31,7 +31,9 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     /// Store molecules from the SDF into the database
-    Store { molecule_file: String },
+    Store {
+        molecule_file: String,
+    },
 
     /// Query existing molecules in the database for matches to OpenFF
     /// parameters in a force field
@@ -69,6 +71,8 @@ enum Commands {
         #[arg(short, long, default_value = "openff-2.1.0.offxml")]
         forcefield: String,
     },
+
+    Status,
 }
 
 /// Parse a sequence of filters like ["inchi:inchis.dat", "natoms:100", ...]
@@ -131,5 +135,6 @@ async fn main() {
             )
         }
         Commands::Serve { forcefield } => serve(table, forcefield).await,
+        Commands::Status => table.print_status(),
     }
 }

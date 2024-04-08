@@ -34,6 +34,9 @@ query:
 parse:
 	$(call run, parse, output/t18b.smiles -t t18b)
 
+status:
+	$(call run, status)
+
 serve:
 	$(call run, serve)
 

@@ -333,6 +333,19 @@ pub fn find_matches(
     find_matches_full(params, mol).into_values().collect()
 }
 
+const PTABLE: [&str; 119] = [
+    "X", "H", "He", "Li", "Be", "B", "C", "N", "O", "F", "Ne", "Na", "Mg",
+    "Al", "Si", "P", "S", "Cl", "Ar", "K", "Ca", "Sc", "Ti", "V", "Cr", "Mn",
+    "Fe", "Co", "Ni", "Cu", "Zn", "Ga", "Ge", "As", "Se", "Br", "Kr", "Rb",
+    "Sr", "Y", "Zr", "Nb", "Mo", "Tc", "Ru", "Rh", "Pd", "Ag", "Cd", "In",
+    "Sn", "Sb", "Te", "I", "Xe", "Cs", "Ba", "La", "Ce", "Pr", "Nd", "Pm",
+    "Sm", "Eu", "Gd", "Tb", "Dy", "Ho", "Er", "Tm", "Yb", "Lu", "Hf", "Ta",
+    "W", "Re", "Os", "Ir", "Pt", "Au", "Hg", "Tl", "Pb", "Bi", "Po", "At",
+    "Rn", "Fr", "Ra", "Ac", "Th", "Pa", "U", "Np", "Pu", "Am", "Cm", "Bk",
+    "Cf", "Es", "Fm", "Md", "No", "Lr", "Rf", "Db", "Sg", "Bh", "Hs", "Mt",
+    "Ds ", "Rg ", "Cn ", "Nh", "Fl", "Mc", "Lv", "Ts", "Og",
+];
+
 /// Encode the elements in `mol` as a 128-bit set
 pub fn get_elements(mol: &ROMol) -> i128 {
     let mut ret = 0;
@@ -350,6 +363,10 @@ pub fn bits_to_elements(bits: i128) -> Vec<usize> {
         }
     }
     ret
+}
+
+pub fn atomic_num_to_symbol(v: Vec<usize>) -> Vec<&'static str> {
+    v.into_iter().map(|n| PTABLE[n]).collect()
 }
 
 #[cfg(test)]

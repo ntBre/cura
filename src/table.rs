@@ -7,6 +7,8 @@ use rusqlite::params_from_iter;
 use rusqlite::Connection;
 use rusqlite::Result as RResult;
 
+use crate::atomic_num_to_symbol;
+use crate::bits_to_elements;
 use crate::ForceField;
 use crate::Molecule;
 use crate::Pid;
@@ -152,6 +154,25 @@ impl Table {
         Ok(res)
     }
 
+    pub fn get_forcefields(&self) -> RResult<Vec<ForceField>> {
+        let conn = self.conn();
+        let mut stmt = conn.prepare(include_str!("sql/get_forcefields.sql"))?;
+        let res = stmt
+            .query_map((), |row| {
+                Ok(ForceField {
+                    id: row.get(0)?,
+                    name: row.get(1)?,
+                    matches: postcard::from_bytes(
+                        &row.get::<usize, Vec<u8>>(2)?,
+                    )
+                    .unwrap(),
+                })
+            })?
+            .flatten()
+            .collect();
+        Ok(res)
+    }
+
     /// Return a flattened vector of SMILES from the database.
     pub fn get_smiles(&self) -> RResult<Vec<String>> {
         let conn = self.conn.lock().unwrap();
@@ -224,6 +245,14 @@ impl Table {
         Ok(ret)
     }
 
+    /// Return the number of molecules in the `molecules` table.
+    pub fn count_molecules(&self) -> RResult<usize> {
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(include_str!("sql/get_molecules.sql"))?;
+        let res = stmt.query_map([], |_row| Ok(()))?;
+        Ok(res.count())
+    }
+
     /// Delete the entry in the forcefields table named `forcefield`.
     pub fn reset_forcefield(&self, forcefield: &str) -> RResult<()> {
         let conn = self.conn();
@@ -231,5 +260,31 @@ impl Table {
             conn.prepare(include_str!("sql/delete_forcefield.sql"))?;
         stmt.execute((forcefield,))?;
         Ok(())
+    }
+
+    /// Print the status of the database tables to stdout.
+    pub fn print_status(&self) {
+        let (elements, total_atoms, nmols) = self
+            .with_molecules(|mol| (mol.elements, mol.natoms))
+            .unwrap()
+            .iter()
+            .fold((0, 0, 0), |(e, a, n), x| (e | x.0, a + x.1, n + 1));
+        println!("Molecules: {nmols}");
+        println!(
+            "Average size: {:.0} atoms",
+            total_atoms as f64 / nmols as f64
+        );
+        println!(
+            "Elements: {:?}",
+            atomic_num_to_symbol(bits_to_elements(elements))
+        );
+
+        println!();
+
+        let forcefields = self.get_forcefields().unwrap();
+        println!("Force fields: {}", forcefields.len());
+        for ff in forcefields {
+            println!("{}: {} parameters", ff.name, ff.matches.len());
+        }
     }
 }
