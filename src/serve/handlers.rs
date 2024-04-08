@@ -20,7 +20,6 @@ use crate::{
         templates::{DrawMol, ErrorPage, Index, Param},
         AppState,
     },
-    Report,
 };
 
 use super::templates::Cluster;
@@ -164,6 +163,16 @@ fn get_param<T: std::str::FromStr>(
         Some(Ok(t)) => t,
         _ => def,
     }
+}
+
+struct Report {
+    max: usize,
+    nfps: usize,
+    noise: usize,
+    clusters: Vec<Vec<usize>>,
+    mols: Vec<ROMol>,
+    map: HashMap<String, String>,
+    mol_map: Vec<(String, ROMol)>,
 }
 
 pub(crate) async fn cluster(

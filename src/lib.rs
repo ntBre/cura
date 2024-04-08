@@ -87,16 +87,6 @@ fn load_forcefield(
         .collect()
 }
 
-pub struct Report {
-    pub max: usize,
-    pub nfps: usize,
-    pub noise: usize,
-    pub clusters: Vec<Vec<usize>>,
-    pub mols: Vec<ROMol>,
-    pub map: HashMap<String, String>,
-    pub mol_map: Vec<(String, ROMol)>,
-}
-
 /// Compute Morgan fingerprints of size `radius` for each of the molecules in
 /// `mols`.
 pub fn make_fps(mols: &Vec<ROMol>, radius: u32) -> Vec<BitVector> {
