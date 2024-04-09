@@ -229,6 +229,17 @@ pub(crate) async fn cluster(
     .into()
 }
 
+/// return the index of the smallest molecule in cluster
+pub(crate) fn find_smallest(mols: &[ROMol], cluster: &[usize]) -> usize {
+    cluster
+        .iter()
+        .enumerate()
+        .map(|(i, c)| (i, &mols[*c]))
+        .min_by_key(|(_, mol)| mol.num_atoms())
+        .unwrap()
+        .0
+}
+
 pub(crate) async fn param(
     State(state): State<Arc<Mutex<AppState>>>,
     Path(pid): Path<String>,

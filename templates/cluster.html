@@ -25,13 +25,22 @@ clusters.len()}} empty clusters
 </p>
 
 {% for (i, c) in clusters.iter().enumerate() %}
-<h1>Cluster {{i + 1}}, {{c.len()}} molecules</h1>
-<p>Central Molecule</p>
-{% let idx = c[0].clone() %}
-{% let mol = mols.index(idx.clone()) %}
-<p>{{mol.num_atoms()}} atoms</p>
-<p>SMILES: {{mol.to_smiles()}}</p>
-{{self.make_svg(mol)|safe}}
+	<h1>Cluster {{i + 1}}, {{c.len()}} molecules</h1>
+	{% let idx = c[0].clone() %}
+	{% let mol = mols.index(idx.clone()) %}
+	<span natoms="{{mol.num_atoms()}}" smiles="{{mol.to_smiles()}}">
+	  {{self.make_svg(mol)|safe}}
+	</span>
+	{% let smallest = crate::serve::handlers::find_smallest(mols, c) %}
+	{% if smallest != 0 %}
+		{% let small_idx = c[smallest].clone() %}
+		{% let small_mol = mols.index(small_idx.clone()) %}
+		<span natoms="{{small_mol.num_atoms()}}" smiles="{{small_mol.to_smiles()}}">
+		{{self.make_svg(small_mol)|safe}}
+		</span>
+	{% endif %}
 {% endfor %}
+
+<dialog onclick="event.target==this && this.close()" id="modal-box"></dialog>
 
 {% endblock %}
