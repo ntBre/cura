@@ -32,9 +32,9 @@ pub(crate) async fn index(
         .unwrap()
         .matches
         .into_iter()
-        .map(|m| m.pid)
+        .map(|m| (m.pid, m.molecules.len()))
         .collect();
-    parameter_ids.sort_by_key(|pid| {
+    parameter_ids.sort_by_key(|(pid, _)| {
         let mut chars = pid.chars();
         let prefix = chars.next().unwrap();
         let number: String =
@@ -42,18 +42,10 @@ pub(crate) async fn index(
         let suffix: Vec<_> = chars.collect();
         (prefix, number.parse::<usize>().unwrap(), suffix)
     });
+    let (parameter_ids, cluster_counts) = parameter_ids.into_iter().unzip();
     Index {
-        cluster_counts: parameter_ids
-            .iter()
-            .map(|pid| {
-                if let Some(ps) = state.param_states.get(pid) {
-                    ps.nclusters
-                } else {
-                    0
-                }
-            })
-            .collect(),
         parameter_ids,
+        molecule_counts: cluster_counts,
     }
     .render()
     .unwrap()

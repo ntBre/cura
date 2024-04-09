@@ -6,12 +6,12 @@
 <table>
   <tr>
 	<th>Parameter</th>
-	<th>Clusters</th>
+	<th>Molecules</th>
   </tr>
   {% for (i, pid) in parameter_ids.iter().enumerate() %}
   <tr>
 	<td><a href="param/{{pid}}">{{pid}}</a></td>
-	<td>{{cluster_counts[i]}}</td>
+	<td>{{molecule_counts[i]}}</td>
   </tr>
   {% endfor %}
 </table>

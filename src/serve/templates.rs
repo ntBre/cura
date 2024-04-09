@@ -8,7 +8,7 @@ use rdkit_rs::ROMol;
 #[template(path = "index.html")]
 pub(crate) struct Index {
     pub(crate) parameter_ids: Vec<String>,
-    pub(crate) cluster_counts: Vec<usize>,
+    pub(crate) molecule_counts: Vec<usize>,
 }
 
 #[derive(Clone)]

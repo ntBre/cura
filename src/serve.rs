@@ -17,7 +17,6 @@ mod templates;
 struct ParamState {
     smiles_list: Option<Vec<String>>,
     param_page: Option<Param>,
-    nclusters: usize,
 }
 
 struct AppState {
