@@ -1,6 +1,7 @@
 use std::{
     collections::HashMap,
     sync::{Arc, Mutex},
+    time::Instant,
 };
 
 use askama::Template;
@@ -191,6 +192,8 @@ pub(crate) async fn cluster(
     let eps = get_param(&params, "eps", DBSCAN_EPS);
     let min_pts = get_param(&params, "min_pts", DBSCAN_MIN_PTS);
 
+    let start = Instant::now();
+
     let Report {
         max,
         nfps,
@@ -215,6 +218,7 @@ pub(crate) async fn cluster(
         mols,
         map,
         mol_map,
+        time: start.elapsed().as_millis() as f64 / 1000.0,
     }
     .render()
     .unwrap()

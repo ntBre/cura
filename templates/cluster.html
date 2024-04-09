@@ -21,7 +21,7 @@
 
 <p>
 {{nfps}} molecules, {{max}} clusters, {{noise}} noise points, pruned {{max + 1 -
-clusters.len()}} empty clusters
+clusters.len()}} empty clusters after {{"{:.1}"|format(time)}} seconds
 </p>
 
 {% for (i, c) in clusters.iter().enumerate() %}

@@ -41,6 +41,9 @@ pub(crate) struct Cluster {
     pub mols: Vec<ROMol>,
     pub map: HashMap<String, String>,
     pub mol_map: Vec<(String, ROMol)>,
+
+    /// The duration of the clustering process
+    pub time: f64,
 }
 
 impl Cluster {
