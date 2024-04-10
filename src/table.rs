@@ -5,7 +5,6 @@ use std::sync::Mutex;
 use log::debug;
 use rusqlite::params_from_iter;
 use rusqlite::Connection;
-use rusqlite::Result as RResult;
 
 use crate::atomic_num_to_symbol;
 use crate::bits_to_elements;
@@ -13,6 +12,8 @@ use crate::ForceField;
 use crate::Molecule;
 use crate::Pid;
 use crate::PROGRESS_INTERVAL;
+
+pub(crate) use rusqlite::Result as RResult;
 
 pub struct Table {
     pub(crate) conn: Mutex<Connection>,
@@ -291,35 +292,43 @@ impl Table {
             println!("{}: {} parameters", ff.name, ff.matches.len());
         }
     }
+}
 
-    pub fn add_to_dataset(&self, smiles: String) -> RResult<()> {
-        let conn = self.conn();
-        let mut stmt = conn.prepare(include_str!("sql/add_to_dataset.sql"))?;
-        stmt.execute((smiles,))?;
-        Ok(())
-    }
+pub(crate) mod dataset {
+    use super::{RResult, Table};
 
-    /// Delete the entry in the forcefields table named `forcefield`.
-    pub fn reset_dataset(&self) -> RResult<()> {
-        let conn = self.conn();
-        let mut stmt = conn.prepare(include_str!("sql/delete_dataset.sql"))?;
-        stmt.execute(())?;
-        Ok(())
-    }
+    impl Table {
+        pub fn add_to_dataset(&self, smiles: String) -> RResult<()> {
+            let conn = self.conn();
+            let mut stmt =
+                conn.prepare(include_str!("sql/add_to_dataset.sql"))?;
+            stmt.execute((smiles,))?;
+            Ok(())
+        }
 
-    pub(crate) fn get_dataset_size(&self) -> RResult<usize> {
-        let conn = self.conn();
-        let mut stmt = conn.prepare("SELECT COUNT(*) from dataset")?;
-        Ok(stmt.query_row((), |row| Ok(row.get(0).unwrap())).unwrap())
-    }
+        /// Delete the entry in the forcefields table named `forcefield`.
+        pub fn reset_dataset(&self) -> RResult<()> {
+            let conn = self.conn();
+            let mut stmt =
+                conn.prepare(include_str!("sql/delete_dataset.sql"))?;
+            stmt.execute(())?;
+            Ok(())
+        }
 
-    pub(crate) fn get_dataset_entries(&self) -> RResult<Vec<String>> {
-        let conn = self.conn();
-        let mut stmt = conn.prepare("SELECT smiles from dataset")?;
-        Ok(stmt
-            .query_map((), |row| Ok(row.get(0).unwrap()))
-            .unwrap()
-            .flatten()
-            .collect())
+        pub(crate) fn get_dataset_size(&self) -> RResult<usize> {
+            let conn = self.conn();
+            let mut stmt = conn.prepare("SELECT COUNT(*) from dataset")?;
+            Ok(stmt.query_row((), |row| Ok(row.get(0).unwrap())).unwrap())
+        }
+
+        pub(crate) fn get_dataset_entries(&self) -> RResult<Vec<String>> {
+            let conn = self.conn();
+            let mut stmt = conn.prepare("SELECT smiles from dataset")?;
+            Ok(stmt
+                .query_map((), |row| Ok(row.get(0).unwrap()))
+                .unwrap()
+                .flatten()
+                .collect())
+        }
     }
 }
