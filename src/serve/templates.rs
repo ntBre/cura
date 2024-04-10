@@ -9,6 +9,8 @@ use rdkit_rs::ROMol;
 pub(crate) struct Index {
     pub(crate) parameter_ids: Vec<String>,
     pub(crate) molecule_counts: Vec<usize>,
+    /// Size of the current dataset
+    pub(crate) ds_size: usize,
 }
 
 #[derive(Clone)]

@@ -7,7 +7,8 @@ use std::{
 use askama::Template;
 use axum::{
     extract::{Path, Query, State},
-    response::Html,
+    http::StatusCode,
+    response::{Html, Redirect},
 };
 use clustrs::{dbscan, Label};
 use log::debug;
@@ -44,9 +45,11 @@ pub(crate) async fn index(
         (prefix, number.parse::<usize>().unwrap(), suffix)
     });
     let (parameter_ids, cluster_counts) = parameter_ids.into_iter().unzip();
+    let ds_size = state.table.get_dataset_size().unwrap();
     Index {
         parameter_ids,
         molecule_counts: cluster_counts,
+        ds_size,
     }
     .render()
     .unwrap()
@@ -293,4 +296,40 @@ pub(crate) async fn param(
     let slot = state.param_states.get_mut(&pid).unwrap();
     slot.param_page = Some(tmpl.clone());
     tmpl.render().unwrap().into()
+}
+
+pub(crate) async fn add_molecule(
+    State(state): State<Arc<Mutex<AppState>>>,
+    Query(params): Query<HashMap<String, String>>,
+) -> StatusCode {
+    let Some(smiles) = params.get("smiles") else {
+        return StatusCode::BAD_REQUEST;
+    };
+    let state = state.lock().unwrap();
+    if state.table.add_to_dataset(smiles.clone()).is_err() {
+        return StatusCode::BAD_REQUEST;
+    }
+    StatusCode::OK
+}
+
+pub(crate) async fn reset_dataset(
+    State(state): State<Arc<Mutex<AppState>>>,
+) -> Redirect {
+    let state = state.lock().unwrap();
+    state.table.reset_dataset().unwrap();
+    Redirect::permanent("/")
+}
+
+pub(crate) async fn export_dataset(
+    State(state): State<Arc<Mutex<AppState>>>,
+    Query(params): Query<HashMap<String, String>>,
+) -> Redirect {
+    let Some(filename) = params.get("filename") else {
+        eprintln!("invalid request: `filename` not in query");
+        return Redirect::permanent("/");
+    };
+    let state = state.lock().unwrap();
+    let ds: Vec<String> = state.table.get_dataset_entries().unwrap();
+    std::fs::write(filename, ds.join("\n")).unwrap();
+    Redirect::permanent("/")
 }

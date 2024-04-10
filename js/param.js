@@ -14,20 +14,24 @@ function main() {
 			// construct a new div to go into the modal, then add in the SMILES,
 			// natoms, and the svg
 			let frame = document.createElement("div");
+			frame.setAttribute("id", "modal-box-content");
 			if (smiles) {
 				let s = document.createElement("p");
 				s.appendChild(document.createTextNode("SMILES: " + smiles));
+				frame.setAttribute("smiles", smiles);
 				frame.appendChild(s);
 			}
 			if (natoms) {
 				let n = document.createElement("p");
 				n.appendChild(document.createTextNode(natoms + " atoms"));
+				frame.setAttribute("natoms", natoms);
 				frame.appendChild(n);
 			}
 			frame.appendChild(svg.cloneNode(true));
 
 			// put the new frame into the dialog and display it
-			dialog.replaceChildren(frame);
+			let toReplace = document.getElementById("modal-box-content");
+			dialog.replaceChild(frame, toReplace);
 			dialog.showModal();
 		});
 	});

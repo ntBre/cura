@@ -1,7 +1,20 @@
 {% extends "base.html" %}
 
+{% block head %}
+{% endblock %}
+
 {% block content %}
-<p>Please select a parameter from the list below:</p>
+
+<p>Molecules in dataset: {{ds_size}}</p>
+<form action="/reset-dataset">
+  <button>Reset dataset</button>
+</form>
+
+<form action="/export-dataset">
+  <input type="text" id="filename" name="filename"
+		 value="dataset.smi"><br><br>
+  <button>Export dataset</button>
+</form>
 
 <table>
   <tr>
