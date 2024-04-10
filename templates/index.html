@@ -6,14 +6,14 @@
 {% block content %}
 
 <p>Molecules in dataset: {{ds_size}}</p>
-<form action="/reset-dataset">
-  <button>Reset dataset</button>
+
+<form action="/reset-dataset" method="post">
+  <input type="submit" value="Reset dataset">
 </form>
 
 <form action="/export-dataset">
-  <input type="text" id="filename" name="filename"
-		 value="dataset.smi"><br><br>
-  <button>Export dataset</button>
+  <input type="text" id="filename" name="filename" value="dataset.smi">
+  <input type="submit" value="Export dataset">
 </form>
 
 <table>

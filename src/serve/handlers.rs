@@ -317,7 +317,7 @@ pub(crate) async fn reset_dataset(
 ) -> Redirect {
     let state = state.lock().unwrap();
     state.table.reset_dataset().unwrap();
-    Redirect::permanent("/")
+    Redirect::to("/")
 }
 
 pub(crate) async fn export_dataset(
