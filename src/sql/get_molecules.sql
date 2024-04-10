@@ -1,1 +1,2 @@
-select id, smiles, inchikey, natoms, elements from molecules
+select id, smiles, inchikey, natoms, elements, tag
+from molecules

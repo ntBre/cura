@@ -58,6 +58,7 @@ impl Table {
                 inchikey,
                 natoms,
                 elements,
+                tag,
             },
         ) in mols.iter().enumerate()
         {
@@ -67,7 +68,7 @@ impl Table {
             );
             tx.execute(
                 include_str!("sql/insert_molecule.sql"),
-                (smiles, inchikey, natoms, elements),
+                (smiles, inchikey, natoms, elements, tag),
             )?;
             if i % PROGRESS_INTERVAL == 0 {
                 eprint!("{i} complete\r");
@@ -212,6 +213,7 @@ impl Table {
                     inchikey: row.get(2)?,
                     natoms: row.get(3)?,
                     elements: row.get(4)?,
+                    tag: row.get(5)?,
                 })
             })?
             .flatten()
@@ -237,6 +239,7 @@ impl Table {
                     inchikey: row.get(2)?,
                     natoms: row.get(3)?,
                     elements: row.get(4)?,
+                    tag: row.get(5)?,
                 }))
             })?
             .flatten()

@@ -6,7 +6,7 @@ use rdkit_rs::{RDError, ROMol, SDMolSupplier};
 
 use crate::{get_elements, table::Table, Molecule, PROGRESS_INTERVAL};
 
-pub fn store(table: &mut Table, molecule_file: &str) {
+pub fn store(table: &mut Table, molecule_file: &str, tag: String) {
     trace!("initializing mol supplier from {}", molecule_file);
     let m = SDMolSupplier::new(molecule_file).unwrap();
 
@@ -32,6 +32,7 @@ pub fn store(table: &mut Table, molecule_file: &str) {
                     mol.to_inchi_key(),
                     mol.num_atoms(),
                     get_elements(&mol),
+                    tag.clone(),
                 )
             })
             .collect()

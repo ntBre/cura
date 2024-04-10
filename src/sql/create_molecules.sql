@@ -3,5 +3,6 @@ id integer primary key,
 smiles text unique,
 inchikey text unique,
 natoms integer,
-elements blob
+elements blob,
+tag text
 )

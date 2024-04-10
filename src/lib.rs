@@ -35,6 +35,7 @@ pub struct Molecule {
     inchikey: String,
     natoms: usize,
     elements: i128,
+    tag: String,
 }
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
@@ -59,6 +60,7 @@ impl Molecule {
         inchikey: String,
         natoms: usize,
         elements: i128,
+        tag: String,
     ) -> Self {
         Self {
             id: None,
@@ -66,6 +68,7 @@ impl Molecule {
             inchikey,
             natoms,
             elements,
+            tag,
         }
     }
 }
@@ -317,7 +320,7 @@ mod tests {
         let tmp = tempfile::NamedTempFile::new().unwrap();
         let mut table = Table::create(tmp.path()).unwrap();
         // this file has multiple entries, but only one SMILES
-        store(&mut table, "testfiles/small.sdf");
+        store(&mut table, "testfiles/small.sdf", "small.sdf".to_owned());
         let got = table.get_smiles().unwrap().len();
         let want = 1;
         assert_eq!(got, want);

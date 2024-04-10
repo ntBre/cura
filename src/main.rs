@@ -34,6 +34,10 @@ enum Commands {
     /// Store molecules from the SDF into the database
     Store {
         molecule_file: String,
+        /// Optional source tag for the loaded molecules.
+        ///
+        /// If omitted, defaults to the value of `molecule_file`.
+        tag: Option<String>,
     },
 
     /// Query existing molecules in the database for matches to OpenFF
@@ -121,7 +125,11 @@ async fn main() {
     let mut table = Table::create(&cli.database).unwrap();
 
     match cli.command {
-        Commands::Store { molecule_file } => store(&mut table, &molecule_file),
+        Commands::Store { molecule_file, tag } => store(
+            &mut table,
+            &molecule_file,
+            tag.unwrap_or(molecule_file.clone()),
+        ),
         Commands::Query {
             forcefield,
             parameter_type,
