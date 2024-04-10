@@ -31,9 +31,6 @@ query_args := -s $(CHEMBL_BASE)/input/want.params -x 'inchi:work/inchis.dat' -x	
 query:
 	$(call run, query, $(query_args))
 
-parse:
-	$(call run, parse, output/t18b.smiles -t t18b)
-
 status:
 	$(call run, status)
 
