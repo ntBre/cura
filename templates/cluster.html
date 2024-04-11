@@ -29,14 +29,14 @@ clusters.len()}} empty clusters after {{"{:.1}"|format(time)}} seconds
 	<h1>Cluster {{i + 1}}, {{c.len()}} molecules</h1>
 	{% let idx = c[0].clone() %}
 	{% let mol = mols.index(idx.clone()) %}
-	<span natoms="{{mol.num_atoms()}}" smiles="{{mol.to_smiles()}}">
+	<span pid="{{pid}}" natoms="{{mol.num_atoms()}}" smiles="{{mol.to_smiles()}}">
 	  {{self.make_svg(mol)|safe}}
 	</span>
 	{% let smallest = crate::serve::handlers::find_smallest(mols, c) %}
 	{% if smallest != 0 %}
 		{% let small_idx = c[smallest].clone() %}
 		{% let small_mol = mols.index(small_idx.clone()) %}
-		<span natoms="{{small_mol.num_atoms()}}" smiles="{{small_mol.to_smiles()}}">
+		<span pid="{{pid}}" natoms="{{small_mol.num_atoms()}}" smiles="{{small_mol.to_smiles()}}">
 		{{self.make_svg(small_mol)|safe}}
 		</span>
 	{% endif %}

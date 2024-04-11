@@ -1,2 +1,2 @@
-insert or ignore into dataset (smiles)
-values (?1)
+insert or ignore into dataset (smiles, pid)
+values (?1, ?2)

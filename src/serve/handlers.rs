@@ -9,6 +9,7 @@ use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
     response::{Html, Redirect},
+    Json,
 };
 use clustrs::{dbscan, Label};
 use log::debug;
@@ -22,6 +23,7 @@ use crate::{
         templates::{Cluster, DrawMol, ErrorPage, Index, Param, Preview},
         AppState,
     },
+    Pid,
 };
 
 pub(crate) async fn index(
@@ -298,16 +300,26 @@ pub(crate) async fn param(
     tmpl.render().unwrap().into()
 }
 
+#[derive(serde::Deserialize)]
+pub(crate) struct AddMolecule {
+    smiles: String,
+    pid: Pid,
+}
+
 pub(crate) async fn add_molecule(
     State(state): State<Arc<Mutex<AppState>>>,
-    smiles: String,
+    Json(body): Json<AddMolecule>,
 ) -> StatusCode {
     let state = state.lock().unwrap();
-    debug!("adding smiles: `{smiles}` to database");
-    if state.table.add_to_dataset(smiles.clone()).is_err() {
-        return StatusCode::BAD_REQUEST;
+    let AddMolecule { smiles, pid } = body;
+    debug!("adding smiles: `{smiles}` to database for pid: `{pid}`");
+    match state.table.add_to_dataset(smiles, pid) {
+        Ok(_) => StatusCode::OK,
+        Err(e) => {
+            debug!("error adding to dataset: {e:?}");
+            return StatusCode::BAD_REQUEST;
+        }
     }
-    StatusCode::OK
 }
 
 pub(crate) async fn reset_dataset(
@@ -327,7 +339,7 @@ pub(crate) async fn preview_dataset(
         .get_dataset_entries()
         .unwrap()
         .into_iter()
-        .map(|s| {
+        .map(|(s, _pid)| {
             let mut mol = ROMol::from_smiles(&s);
             mol.openff_clean();
             DrawMol {
@@ -349,7 +361,12 @@ pub(crate) async fn export_dataset(
         return Redirect::permanent("/");
     };
     let state = state.lock().unwrap();
-    let ds: Vec<String> = state.table.get_dataset_entries().unwrap();
+    let (ds, _): (Vec<String>, Vec<String>) = state
+        .table
+        .get_dataset_entries()
+        .unwrap()
+        .into_iter()
+        .unzip();
     std::fs::write(filename, ds.join("\n")).unwrap();
     Redirect::permanent("/")
 }

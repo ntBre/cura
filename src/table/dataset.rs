@@ -1,11 +1,13 @@
+use crate::Pid;
+
 use super::{RResult, Table};
 
 impl Table {
-    pub fn add_to_dataset(&self, smiles: String) -> RResult<()> {
+    pub fn add_to_dataset(&self, smiles: String, pid: String) -> RResult<()> {
         let conn = self.conn();
         let mut stmt =
             conn.prepare(include_str!("../sql/add_to_dataset.sql"))?;
-        stmt.execute((smiles,))?;
+        stmt.execute((smiles, pid))?;
         Ok(())
     }
 
@@ -24,11 +26,11 @@ impl Table {
         Ok(stmt.query_row((), |row| Ok(row.get(0).unwrap())).unwrap())
     }
 
-    pub(crate) fn get_dataset_entries(&self) -> RResult<Vec<String>> {
+    pub(crate) fn get_dataset_entries(&self) -> RResult<Vec<(String, Pid)>> {
         let conn = self.conn();
-        let mut stmt = conn.prepare("SELECT smiles from dataset")?;
+        let mut stmt = conn.prepare("SELECT smiles, pid from dataset")?;
         Ok(stmt
-            .query_map((), |row| Ok(row.get(0).unwrap()))
+            .query_map((), |row| Ok((row.get(0).unwrap(), row.get(1).unwrap())))
             .unwrap()
             .flatten()
             .collect())

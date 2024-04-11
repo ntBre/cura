@@ -7,6 +7,7 @@ function main() {
 		svg.addEventListener("click", function () {
 			let smiles = svg.getAttribute("smiles");
 			let natoms = svg.getAttribute("natoms");
+			let pid = svg.getAttribute("pid");
 
 			// get the dialog box initially in the page
 			let dialog = document.getElementById("modal-box");
@@ -26,6 +27,11 @@ function main() {
 				n.appendChild(document.createTextNode(natoms + " atoms"));
 				frame.setAttribute("natoms", natoms);
 				frame.appendChild(n);
+			}
+			if (pid) {
+				frame.setAttribute("pid", pid);
+			} else {
+				console.log("WARNING: pid unset");
 			}
 			frame.appendChild(svg.cloneNode(true));
 
