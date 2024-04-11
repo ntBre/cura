@@ -300,12 +300,10 @@ pub(crate) async fn param(
 
 pub(crate) async fn add_molecule(
     State(state): State<Arc<Mutex<AppState>>>,
-    Query(params): Query<HashMap<String, String>>,
+    smiles: String,
 ) -> StatusCode {
-    let Some(smiles) = params.get("smiles") else {
-        return StatusCode::BAD_REQUEST;
-    };
     let state = state.lock().unwrap();
+    debug!("adding smiles: `{smiles}` to database");
     if state.table.add_to_dataset(smiles.clone()).is_err() {
         return StatusCode::BAD_REQUEST;
     }
