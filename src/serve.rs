@@ -52,6 +52,7 @@ pub async fn serve(table: Table, forcefield: String) {
         .route("/cluster/:pid", get(handlers::cluster))
         .route("/add-molecule", get(handlers::add_molecule))
         .route("/reset-dataset", post(handlers::reset_dataset))
+        .route("/preview-dataset", get(handlers::preview_dataset))
         .route("/export-dataset", get(handlers::export_dataset))
         .nest_service("/css", tower_http::services::ServeDir::new("css"))
         .nest_service("/js", tower_http::services::ServeDir::new("js"))

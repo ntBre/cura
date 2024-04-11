@@ -19,7 +19,7 @@ use rdkit_rs::{fingerprint::tanimoto, ROMol};
 use crate::{
     find_matches_full, load_forcefield, make_fps,
     serve::{
-        templates::{Cluster, DrawMol, ErrorPage, Index, Param},
+        templates::{Cluster, DrawMol, ErrorPage, Index, Param, Preview},
         AppState,
     },
 };
@@ -318,6 +318,28 @@ pub(crate) async fn reset_dataset(
     let state = state.lock().unwrap();
     state.table.reset_dataset().unwrap();
     Redirect::to("/")
+}
+
+pub(crate) async fn preview_dataset(
+    State(state): State<Arc<Mutex<AppState>>>,
+) -> Html<String> {
+    let state = state.lock().unwrap();
+    let mols = state
+        .table
+        .get_dataset_entries()
+        .unwrap()
+        .into_iter()
+        .map(|s| {
+            let mut mol = ROMol::from_smiles(&s);
+            mol.openff_clean();
+            DrawMol {
+                smiles: s,
+                natoms: mol.num_atoms(),
+                svg: mol.draw_svg(300, 300, "", &[]),
+            }
+        })
+        .collect();
+    Preview { mols }.render().unwrap().into()
 }
 
 pub(crate) async fn export_dataset(

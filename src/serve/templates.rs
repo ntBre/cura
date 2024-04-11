@@ -66,6 +66,12 @@ impl Cluster {
 }
 
 #[derive(Template)]
+#[template(path = "preview.html")]
+pub(crate) struct Preview {
+    pub(crate) mols: Vec<DrawMol>,
+}
+
+#[derive(Template)]
 #[template(path = "error.html")]
 pub(crate) struct ErrorPage {
     pub(crate) pid: String,
