@@ -24,11 +24,13 @@
   <tr>
 	<th>Parameter</th>
 	<th>Molecules</th>
+	<th>Dataset</th>
   </tr>
   {% for (i, pid) in parameter_ids.iter().enumerate() %}
   <tr>
 	<td><a href="param/{{pid}}">{{pid}}</a></td>
 	<td>{{molecule_counts[i]}}</td>
+	<td>{{pid_counts[i]}}</td>
   </tr>
   {% endfor %}
 </table>

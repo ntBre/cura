@@ -8,7 +8,14 @@ use rdkit_rs::ROMol;
 #[template(path = "index.html")]
 pub(crate) struct Index {
     pub(crate) parameter_ids: Vec<String>,
+
+    /// The number of molecules matching these parameters in the current
+    /// ForceField
     pub(crate) molecule_counts: Vec<usize>,
+
+    /// The number of molecules added to the dataset for each `parameter_id`
+    pub(crate) pid_counts: Vec<usize>,
+
     /// Size of the current dataset
     pub(crate) ds_size: usize,
 }

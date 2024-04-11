@@ -1,5 +1,6 @@
 use std::{
     collections::HashMap,
+    ops::AddAssign,
     sync::{Arc, Mutex},
     time::Instant,
 };
@@ -46,11 +47,27 @@ pub(crate) async fn index(
         let suffix: Vec<_> = chars.collect();
         (prefix, number.parse::<usize>().unwrap(), suffix)
     });
-    let (parameter_ids, cluster_counts) = parameter_ids.into_iter().unzip();
+    let (parameter_ids, cluster_counts): (Vec<_>, Vec<_>) =
+        parameter_ids.into_iter().unzip();
     let ds_size = state.table.get_dataset_size().unwrap();
+
+    // get all dataset entries and map back to pids
+    let entries: Vec<(String, Pid)> =
+        state.table.get_dataset_entries().unwrap();
+    let mut map = HashMap::new();
+    for (_smiles, pid) in entries {
+        map.entry(pid).or_insert(0).add_assign(1);
+    }
+
+    let mut pid_counts = Vec::with_capacity(parameter_ids.len());
+    for pid in &parameter_ids {
+        pid_counts.push(map.get(pid).copied().unwrap_or(0));
+    }
+
     Index {
         parameter_ids,
         molecule_counts: cluster_counts,
+        pid_counts,
         ds_size,
     }
     .render()
