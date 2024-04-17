@@ -1,5 +1,6 @@
 use std::{
     collections::HashMap,
+    fs::File,
     ops::AddAssign,
     sync::{Arc, Mutex},
     time::Instant,
@@ -378,12 +379,10 @@ pub(crate) async fn export_dataset(
         return Redirect::permanent("/");
     };
     let state = state.lock().unwrap();
-    let (ds, _): (Vec<String>, Vec<String>) = state
-        .table
-        .get_dataset_entries()
-        .unwrap()
-        .into_iter()
-        .unzip();
-    std::fs::write(filename, ds.join("\n")).unwrap();
+    let mut out = File::create(filename).unwrap();
+    use std::io::Write;
+    for (smiles, pid) in state.table.get_dataset_entries().unwrap() {
+        writeln!(out, "{pid} {smiles}").unwrap();
+    }
     Redirect::permanent("/")
 }
