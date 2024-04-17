@@ -123,24 +123,27 @@ fn make_cluster_report(
             _ => None,
         })
         .max()
-        .unwrap_or_else(|| {
-            eprintln!("error: all noise points, exiting:\n{labels:?}");
-            std::process::exit(1);
-        });
+        .unwrap_or(&0);
 
     let mut clusters: Vec<Vec<usize>> = vec![vec![]; max + 1];
-    let mut noise = 0;
+    let mut noise = Vec::new();
     for (i, l) in labels.iter().enumerate() {
         match l {
             Label::Cluster(n) => clusters[*n].push(i),
-            _ => noise += 1,
+            _ => noise.push(i),
         }
+    }
+
+    let noise_pts = noise.len();
+    if clusters[0].is_empty() {
+        eprintln!("warning: all noise points: {labels:?}");
+        clusters[0] = noise;
     }
 
     Ok(Report {
         max,
         nfps,
-        noise,
+        noise: noise_pts,
         clusters,
         mols,
         map,
