@@ -375,17 +375,18 @@ pub(crate) async fn preview_dataset(
 
 pub(crate) async fn export_dataset(
     State(state): State<Arc<Mutex<AppState>>>,
-    Query(params): Query<HashMap<String, String>>,
+    body: String,
 ) -> Redirect {
-    let Some(filename) = params.get("filename") else {
-        eprintln!("invalid request: `filename` not in query");
-        return Redirect::permanent("/");
+    // expecting a request body like `filename="dataset.smi"`
+    let &[label, filename] = &body.split('=').collect::<Vec<_>>()[..] else {
+        panic!("filename not in body: {body:?}");
     };
+    assert_eq!(label, "filename");
     let state = state.lock().unwrap();
     let mut out = File::create(filename).unwrap();
     use std::io::Write;
     for (smiles, pid) in state.table.get_dataset_entries().unwrap() {
         writeln!(out, "{pid} {smiles}").unwrap();
     }
-    Redirect::permanent("/")
+    Redirect::to("/")
 }
