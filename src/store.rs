@@ -1,4 +1,8 @@
-use std::sync::atomic::AtomicUsize;
+use std::{
+    collections::HashSet,
+    sync::{atomic::AtomicUsize, RwLock},
+    time::Instant,
+};
 
 use log::{trace, warn};
 use rayon::iter::{ParallelBridge, ParallelIterator};
@@ -16,9 +20,11 @@ pub fn store(table: &mut Table, molecule_file: &str, tag: String) {
     let so_inp = ROMol::from_smiles("S(=O)(=O)*");
     let so_out = ROMol::from_smiles("S(=O)([O-])");
 
+    let seen = RwLock::new(HashSet::new());
+
     let map_op = |mol: Result<ROMol, RDError>| -> Vec<Molecule> {
         let cur = progress.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-        if cur % PROGRESS_INTERVAL == 0 {
+        if cur % PROGRESS_INTERVAL != 0 {
             eprint!("{cur} complete\r");
         }
         let Ok(mut mol) = mol else {
@@ -28,31 +34,48 @@ pub fn store(table: &mut Table, molecule_file: &str, tag: String) {
         mol.openff_clean();
         mol.to_smiles()
             .split('.')
-            .flat_map(|s| {
+            .flat_map(|s| -> Box<dyn Iterator<Item = Molecule>> {
+                if seen.read().unwrap().contains(s) {
+                    trace!("skipping previously-seen smiles");
+                    return Box::new(std::iter::empty());
+                }
+                seen.write().unwrap().insert(s.to_owned());
                 let mut mol = ROMol::from_smiles(s);
                 mol.openff_clean();
-                recap_decompose(&mol, None, Some(4), None)
-                    .get_leaves()
-                    .into_values()
-                    .map(|mut m| {
-                        m = m
-                            .replace_substructs(&so_inp, &so_out, true)
-                            .remove(0);
-                        Molecule::new(
-                            m.to_smiles(),
-                            None,
-                            m.num_atoms(),
-                            get_elements(&m),
+                let smiles = mol.to_smiles();
+                let natoms = mol.num_atoms();
+                let start = Instant::now();
+                let leaves =
+                    recap_decompose(&mol, None, Some(4), None).get_leaves();
+                let e = start.elapsed().as_secs_f64();
+                if e > 1.0 {
+                    trace!(
+                        "finished decompose for {natoms} atoms after {e:.1} sec"
+                    );
+                }
+                Box::new(
+                    leaves
+                        .into_values()
+                        .map(|mut m| {
+                            m = m
+                                .replace_substructs(&so_inp, &so_out, true)
+                                .remove(0);
+                            Molecule::new(
+                                m.to_smiles(),
+                                None,
+                                m.num_atoms(),
+                                get_elements(&m),
+                                tag.clone(),
+                            )
+                        })
+                        .chain(std::iter::once(Molecule::new(
+                            smiles,
+                            Some(mol.to_inchi_key()),
+                            natoms,
+                            get_elements(&mol),
                             tag.clone(),
-                        )
-                    })
-                    .chain(std::iter::once(Molecule::new(
-                        mol.to_smiles(),
-                        Some(mol.to_inchi_key()),
-                        mol.num_atoms(),
-                        get_elements(&mol),
-                        tag.clone(),
-                    )))
+                        ))),
+                )
             })
             .collect()
     };

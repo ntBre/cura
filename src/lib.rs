@@ -1,3 +1,5 @@
+#![feature(duration_millis_float)]
+
 use std::{
     collections::{HashMap, HashSet},
     process::exit,
