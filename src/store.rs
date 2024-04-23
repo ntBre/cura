@@ -29,7 +29,7 @@ pub fn store(table: &mut Table, molecule_file: &str, tag: String) {
                 mol.openff_clean();
                 Molecule::new(
                     mol.to_smiles(),
-                    mol.to_inchi_key(),
+                    Some(mol.to_inchi_key()),
                     mol.num_atoms(),
                     get_elements(&mol),
                     tag.clone(),

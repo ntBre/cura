@@ -32,7 +32,8 @@ pub struct Molecule {
     /// None when inserting into the database but set when retrieving
     id: Option<usize>,
     smiles: String,
-    inchikey: String,
+    /// None for fragments, present for full molecules
+    inchikey: Option<String>,
     natoms: usize,
     elements: i128,
     tag: String,
@@ -57,7 +58,7 @@ pub struct ForceField {
 impl Molecule {
     pub fn new(
         smiles: String,
-        inchikey: String,
+        inchikey: Option<String>,
         natoms: usize,
         elements: i128,
         tag: String,
