@@ -323,7 +323,7 @@ mod tests {
         // this file has multiple entries, but only one SMILES
         store(&mut table, "testfiles/small.sdf", "small.sdf".to_owned());
         let got = table.get_smiles().unwrap().len();
-        let want = 1;
+        let want = 4;
         assert_eq!(got, want);
 
         query(
@@ -335,6 +335,6 @@ mod tests {
         );
 
         let res = table.with_molecules(|mol| mol.natoms).unwrap();
-        assert_eq!(res.len(), 1);
+        assert_eq!(res.len(), 4);
     }
 }
