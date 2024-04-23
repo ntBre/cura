@@ -338,7 +338,7 @@ pub(crate) async fn add_molecule(
         Ok(_) => StatusCode::OK,
         Err(e) => {
             debug!("error adding to dataset: {e:?}");
-            return StatusCode::BAD_REQUEST;
+            StatusCode::BAD_REQUEST
         }
     }
 }
