@@ -48,9 +48,12 @@ pub fn store(table: &mut Table, molecule_file: &str, tag: String) {
                 let leaves =
                     recap_decompose(&mol, None, Some(4), None).get_leaves();
                 let e = start.elapsed().as_secs_f64();
-                if e > 1.0 {
+                if e > 30.0 {
                     trace!(
-                        "finished decompose for {natoms} atoms after {e:.1} sec"
+                        "recap: {} atoms -> {} leaves in {e:.1} sec, smiles:\n{}",
+                        natoms,
+                        leaves.len(),
+                        smiles
                     );
                 }
                 Box::new(
